@@ -2,12 +2,18 @@
 
 set -e
 COMMAND=$(dirname $0)/longoption.sh
+FAILS=()
+TESTS=0
+hr=--------------------------------------------
 optest(){
+  local TITLE=$1
+  TESTS=$((TESTS + 1))
+  echo "TEST $TESTS: $TITLE"
   local TEMP=$(mktemp)
-  local DOC=$1
-  local COMMAND=$2
-  local ACTUAL="$3"
-  local EXPECT="$4"
+  local DOC=$2
+  local COMMAND=$3
+  local ACTUAL="$4"
+  local EXPECT="$5"
   local EXPECT_DOT="$EXPECT
 ."  
   echo "#!/bin/bash
@@ -22,7 +28,11 @@ echo \".\"
 " > $TEMP
   if ! RESULT="$(bash $TEMP)";then
     cat $TEMP
-    exit -1
+    FAILS=("${FAILS[@]}" "$TESTS [ERROR] $TITLE")
+    echo "$TESTS ERROR END $TITLE"
+    echo $hr
+    return
+    #exit -1
   fi
   if [ "$RESULT" != "$EXPECT_DOT" ];then
     echo "***************fail****************"
@@ -39,9 +49,11 @@ echo \".\"
     I=$(echo "$DOC"|bash -c "$COMMAND")
     echo "$I"
     echo "----diff--------"
+    set +e
     diff -u <(echo "$EXPECT_DOT") <(echo "$RESULT")
-  else
-    echo "ok"
+    echo "NOT ACTUAL $TITLE"
+    echo $hr
+    FAILS=("${FAILS[@]}" "$TESTS [NOT ACTUAL] $TITLE")
   fi
 }
 
@@ -57,29 +69,33 @@ DOC="
   --no-flag-4 反転フラグ
 "
 
+optest "DOC で指定した変数が取れる" \
+ "--opt VALNAME" "$COMMAND --opt val" 'VALNAME=$VALNAME' 'VALNAME=val'
 
-echo "OPTPARSE__OPTION_ARGS にオプションとして解析できた変数名が配列として入っている"
-optest "--hoge HOGE" "$COMMAND --hoge val" '${OPTPARSE__OPTION_ARGS["HOGE"]}' "--hoge val"
+if [ ${BASH_VERSINFO[0]} -ge 4 ];then
+optest "OPTPARSE__OPTION_ARGS にオプションとして解析できた変数名が配列として入っている" \
+ "--hoge HOGE" "$COMMAND --hoge val" '${OPTPARSE__OPTION_ARGS["HOGE"]}' "--hoge val"
+fi
 
-echo "IMPORTテスト 未指定ならIMPORT する"
-optest "$DOC" "OPTPARSE_IMPORT=1 FUGA=import $COMMAND" '$FUGA' "import"
+optest "IMPORTテスト OPTPARSE_IMPORT=1 ならIMPORT する" \
+ "--hugahuga FUGA" "OPTPARSE_IMPORT=1 FUGA=import $COMMAND" '$FUGA' "import"
 
-echo "IMPORTテスト OPTPARSE_IMPORT=0 ならIMPORT しない"
-optest "$DOC" "OPTPARSE_IMPORT=0 FUGA=import $COMMAND" '$FUGA' ""
+optest "IMPORTテスト OPTPARSE_IMPORT=0 ならIMPORT しない" \
+ "--hugahuga FUGA" "OPTPARSE_IMPORT=0 FUGA=import $COMMAND" '$FUGA' ""
 
-echo "IMPORTテスト OPTPARSE_IMPORT 未指定ならIMPORT しない"
-optest "$DOC" "FUGA=import $COMMAND" '$FUGA' ""
+optest "IMPORTテスト OPTPARSE_IMPORT 未指定ならIMPORT しない" \
+ "--hugahuga FUGA" "FUGA=import $COMMAND" '$FUGA' ""
 
-echo "PREFIXテスト OPTPARSE_PREFIX=hoge"
-optest "$DOC" "OPTPARSE_PREFIX=hoge_ $COMMAND --hogehoge 1" '
+optest "PREFIXテスト OPTPARSE_PREFIX=hoge" \
+ "$DOC" "OPTPARSE_PREFIX=hoge_ $COMMAND --hogehoge 1" '
 hoge_HOGE=$hoge_HOGE
 HOGE=$HOGE
 ' "
 hoge_HOGE=1
 HOGE=
 "
-echo "PREFIX と IMPORTテスト。 IMPORTされるのは PREFIX のついた方"
-optest "$DOC" "OPTPARSE_IMPORT=1 HOGE=1 hoge_HOGE=2 OPTPARSE_PREFIX=hoge_ $COMMAND" '
+optest "PREFIX と IMPORTテスト。 IMPORTされるのは PREFIX のついた方" \
+ "$DOC" "OPTPARSE_IMPORT=1 HOGE=1 hoge_HOGE=2 OPTPARSE_PREFIX=hoge_ $COMMAND" '
 hoge_HOGE=$hoge_HOGE
 HOGE=$HOGE
 ' "
@@ -88,8 +104,8 @@ HOGE=
 "
 
 
-echo "STOP_PARSE, START_PARSE"
-optest "test
+optest "STOP_PARSE, START_PARSE" \
+ "test
   --flag1
 OPTPARSE:STOP_PARSE
   --flag2
@@ -113,8 +129,8 @@ test
 
 "
 
-echo "STOP_HELP, START_HELP"
-optest "test
+optest "STOP_HELP, START_HELP" \
+ "test
   --flag1
 OPTPARSE:STOP_HELP
   --flag2
@@ -137,8 +153,8 @@ test
 
 "
 
-echo "引数付きオプションに引数が無い場合にエラーにならない"
-optest "
+optest "引数付きオプションに引数が無い場合にエラーにならない" \
+ "
 --hoge HOGE
 --huge HUGE
 " "$COMMAND --hoge hoge --huge" '
@@ -151,20 +167,28 @@ HUGE=
 OPTPARSE__OTHER_ARGS=--huge
 "
 
-echo "空白もうまく渡せる"
-optest " --hoge HOGE " "$COMMAND --hoge \" h \" \" a \" \" b \"" '
+optest "空白もうまく渡せる" \
+  " --hoge HOGE " "$COMMAND --hoge \" h \" \" a \" \" b \"" '
 HOGE=[$HOGE]
 OPTPARSE__OTHER_ARGS0=[${OPTPARSE__OTHER_ARGS[0]}]
 OPTPARSE__OTHER_ARGS1=[${OPTPARSE__OTHER_ARGS[1]}]
-OPTPARSE__OPTION_ARGS[HOGE]=[${OPTPARSE__OPTION_ARGS["HOGE"]}]
 ' "
 HOGE=[ h ]
 OPTPARSE__OTHER_ARGS0=[ a ]
 OPTPARSE__OTHER_ARGS1=[ b ]
+"
+
+if [ ${BASH_VERSINFO[0]} -ge 4 ];then
+optest "空白もうまく渡せる(OPTPARSE__OPTION_ARGS)" \
+  " --hoge HOGE " "$COMMAND --hoge \" h \" \" a \" \" b \"" '
+OPTPARSE__OPTION_ARGS[HOGE]=[${OPTPARSE__OPTION_ARGS["HOGE"]}]
+' "
 OPTPARSE__OPTION_ARGS[HOGE]=[--hoge \ h\ ]
 "
-echo "長いテスト"
-optest "$DOC" "OPTPARSE_IMPORT=1 FUGA=import $COMMAND --flag-1 --flag-2 --hogehoge \"aaa \$ \\\" bb\" arg1 arg2" '
+fi
+
+optest "長いテスト" \
+  "$DOC" "OPTPARSE_IMPORT=1 FUGA=import $COMMAND --flag-1 --flag-2 --hogehoge \"aaa \$ \\\" bb\" arg1 arg2" '
 hogehoge=$HOGE
 hugahuga=$FUGA
 flag-1=$FLAG_1
@@ -181,3 +205,16 @@ flag-3=0
 flag-4=1
 OPTPARSE__OTHER_ARGS=arg1 arg2
 '
+
+echo $hr
+echo "TEST RUN $TESTS"
+if [[ "${#FAILS[@]}" = 0 ]];then
+  echo "ALL SUCCESS"
+else
+  echo "FAIL ${#FAILS[@]}"
+  for i in "${FAILS[@]}"
+  do
+    echo "  $i"
+  done
+  exit -1
+fi

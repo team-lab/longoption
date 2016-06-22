@@ -61,16 +61,79 @@
 
 set -e
 set -o pipefail
-set -u
+#set -u
+#set -x
 
-declare -A OPTPARSE__OPTIONDIC
-declare -A OPTPARSE__VALUEDIC
-declare -A OPTPARSE__NAMEDIC
+function map_not_init
+{
+  local name=$1
+  eval "declare -p ${name}__keys" >/dev/null 2>&1
+  [[ $? != 0 ]]
+  return $?
+}
+
+function map_init
+{
+  local name="$1"
+  eval "${name}__keys=()"
+  eval "${name}__values=()"
+}
+
+function map_index
+{
+  local name=$1
+  local key=$2
+  local i=0
+  if map_not_init "$name" ;then
+    return
+  fi
+  local keys
+  eval "keys=(\"\${${name}__keys[@]}\")"
+  for ((i=0; i < ${#keys[@]}; i++)) {
+    if [[  "${keys[$i]}" = "$key" ]];then
+      echo "$i"
+      return
+    fi
+  }
+}
+
+function map_put
+{
+  local name="$1"
+  local key="$2"
+  local value="$3"
+  local i
+  if map_not_init "$name"; then
+    map_init "$name"
+  else
+    i=$(map_index "$name" "$key")
+  fi
+  if [ -z "$i" ];then
+    eval "i=\${#${name}__keys[@]}"
+    eval ${name}__keys[$i]="\$key"
+  fi
+  eval ${name}__values[$i]="\$value"
+}
+
+function map_get
+{
+  local name="$1"
+  local key="$2"
+  local i=$(map_index "$name" "$key")
+  if [ ! -z "$i" ];then
+    eval echo \"\${${name}__values[$i]}\"
+  fi
+}
+
+map_init OPTPARSE__OPTIONDIC
+map_init OPTPARSE__VALUEDIC
+map_init OPTPARSE__NAMEDIC
 OPTPARSE_IMPORT=${OPTPARSE_IMPORT:-0}
 OPTPARSE_PREFIX=${OPTPARSE_PREFIX:-}
 OPTPARSE__HELP_TEXT=""
 mode_addhelp=1
 mode_parse=1
+: parse stdin
 while IFS= read line; do
   if [[ "$line" =~ ^OPTPARSE: ]];then
     case "$line" in
@@ -105,78 +168,87 @@ $line"
   if [[ "$line" =~ ^\ *--([-a-z0-9]+)\ +([A-Z0-9_]+)(\ |$) ]];then
     optname=${BASH_REMATCH[1]}
     valuename=${OPTPARSE_PREFIX}${BASH_REMATCH[2]}
-    OPTPARSE__NAMEDIC[--$optname]="OPTION"
-    OPTPARSE__OPTIONDIC[--$optname]="$valuename"
+    map_put OPTPARSE__NAMEDIC "--$optname" "OPTION"
+    map_put OPTPARSE__OPTIONDIC "--$optname" "$valuename"
     if [ $OPTPARSE_IMPORT == 0 ];then
-      OPTPARSE__VALUEDIC[$valuename]=""
+      map_put OPTPARSE__VALUEDIC "$valuename" ""
     else
-      OPTPARSE__VALUEDIC[$valuename]="${!valuename:-}"
+      map_put OPTPARSE__VALUEDIC "$valuename" "${!valuename:-}"
     fi
   elif [[ "$line" =~ ^\ *--(no-)?([-a-z0-9]+) ]];then
     noflag=${BASH_REMATCH[1]}
     optname=${BASH_REMATCH[2]}
     valuename=${BASH_REMATCH[2]}
-    valuename=${valuename^^}
+    valuename=$(echo "$valuename"| tr '[a-z]' '[A-Z]')
     valuename=${valuename//-/_}
     valuename=${OPTPARSE_PREFIX}${valuename}
-    OPTPARSE__NAMEDIC[--no-$optname]="NOFLAG"
-    OPTPARSE__OPTIONDIC[--no-$optname]="$valuename"
-    OPTPARSE__NAMEDIC[--$optname]="FLAG"
-    OPTPARSE__OPTIONDIC[--$optname]="$valuename"
+    map_put OPTPARSE__NAMEDIC "--no-$optname" "NOFLAG"
+    map_put OPTPARSE__OPTIONDIC "--no-$optname" "$valuename"
+    map_put OPTPARSE__NAMEDIC "--$optname" "FLAG"
+    map_put OPTPARSE__OPTIONDIC "--$optname" "$valuename"
     if [ $OPTPARSE_IMPORT != 0 ];then
       if [ "$noflag" == "no-" ];then
-        OPTPARSE__VALUEDIC[$valuename]=1
+        map_put OPTPARSE__VALUEDIC "$valuename" 1
       else
-        OPTPARSE__VALUEDIC[$valuename]=0
+        map_put OPTPARSE__VALUEDIC "$valuename" 0
       fi
     else
       if [ "$noflag" == "no-" ];then
-        OPTPARSE__VALUEDIC[$valuename]=${!valuename:-1}
+        map_put OPTPARSE__VALUEDIC "$valuename" "${!valuename:-1}"
       else
-        OPTPARSE__VALUEDIC[$valuename]=${!valuename:-0}
+        map_put OPTPARSE__VALUEDIC "$valuename" "${!valuename:-0}"
       fi
     fi
   fi
 done
 
-declare -A OPTPARSE__OPTION_ARGS=()
+: parse ARGV
+map_init OPTPARSE__OPTION_ARGS
 declare -a OPTPARSE__OTHER_ARGS=("")
-while (( $# > 0 ))
+while (( ${#} > 0 ))
 do
-  OPTTYPE=${OPTPARSE__NAMEDIC[$1]:-}
+  OPTTYPE="$(map_get OPTPARSE__NAMEDIC "${1}")"
   case "$OPTTYPE" in
   FLAG)
-    valuename=${OPTPARSE__OPTIONDIC[$1]}
-    OPTPARSE__VALUEDIC[$valuename]=1
-    OPTPARSE__OPTION_ARGS[$valuename]="$1"
+    valuename="$(map_get OPTPARSE__OPTIONDIC "${1}")"
+    map_put OPTPARSE__VALUEDIC "$valuename" 1
+    map_put OPTPARSE__OPTION_ARGS "$valuename" "${1}"
     ;;
   NOFLAG)
-    valuename=${OPTPARSE__OPTIONDIC[$1]}
-    OPTPARSE__VALUEDIC[$valuename]=0
-    OPTPARSE__OPTION_ARGS[$valuename]="$1"
+    valuename="$(map_get OPTPARSE__OPTIONDIC "${1}")"
+    map_put OPTPARSE__VALUEDIC "$valuename" 0
+    map_put OPTPARSE__OPTION_ARGS "$valuename" "${1}"
     ;;
   OPTION)
-    if (( $# > 1 )) ;then
-      valuename=${OPTPARSE__OPTIONDIC[$1]}
-      OPTPARSE__VALUEDIC[$valuename]=$(printf %q "$2")
-      OPTPARSE__OPTION_ARGS[$valuename]=$(printf "%q %q" "$1" "$2")
+    if (( ${#} > 1 )) ;then
+      valuename="$(map_get OPTPARSE__OPTIONDIC "${1}")"
+      map_put OPTPARSE__VALUEDIC "$valuename" "${2}"
+      map_put OPTPARSE__OPTION_ARGS "$valuename" $(printf "%q %q" "${1}" "${2}")
       shift
     else
-      OPTPARSE__OTHER_ARGS=("${OPTPARSE__OTHER_ARGS[@]}" "$1")
+      OPTPARSE__OTHER_ARGS=("${OPTPARSE__OTHER_ARGS[@]}" "${1}")
     fi
     ;;
   *)
-    OPTPARSE__OTHER_ARGS=("${OPTPARSE__OTHER_ARGS[@]}" "$1")
+    OPTPARSE__OTHER_ARGS=("${OPTPARSE__OTHER_ARGS[@]}" "${1}")
   esac
   shift
 done
 
-for n in ${!OPTPARSE__VALUEDIC[@]}
-do
-  echo "$n="${OPTPARSE__VALUEDIC[$n]}""
-done
-echo "OPTPARSE__HELP_TEXT=$(printf %q "$OPTPARSE__HELP_TEXT")"
+: output options
+for ((i=0; i < ${#OPTPARSE__VALUEDIC__keys[@]}; i++)) {
+  echo "${OPTPARSE__VALUEDIC__keys[$i]}=$(printf %q "${OPTPARSE__VALUEDIC__values[$i]}")"
+}
+declare -p OPTPARSE__HELP_TEXT
 OPTPARSE__OTHER_ARGS=("${OPTPARSE__OTHER_ARGS[@]:1}")
 declare -p OPTPARSE__OTHER_ARGS
-declare -p OPTPARSE__OPTION_ARGS
-
+if [ ${BASH_VERSINFO[0]} -lt 4 ];then
+  :
+else
+  declare -A OPTPARSE__OPTION_ARGS
+  for ((i=0; i < ${#OPTPARSE__VALUEDIC__keys[@]}; i++)) {
+    key=OPTPARSE__OPTION_ARGS__keys[$i]
+    OPTPARSE__OPTION_ARGS[$key]="${OPTPARSE__OPTION_ARGS__values[$i]}"
+  }
+  declare -p OPTPARSE__OPTION_ARGS
+fi
