@@ -60,7 +60,7 @@ echo \".\"
 
 DOC="
  --hogehoge HOGE オプション
- OPTPARSE: --hoge HOGE hogehoge のショートオプション的な
+ LONGOPTION: --hoge HOGE hogehoge のショートオプション的な
  --hugahuga FUGA
   --opt1 HUGE オプション HUGE
   --flag-1 フラグ
@@ -73,21 +73,21 @@ optest "DOC で指定した変数が取れる" \
  "--opt VALNAME" "$COMMAND --opt val" 'VALNAME=$VALNAME' 'VALNAME=val'
 
 if [ ${BASH_VERSINFO[0]} -ge 4 ];then
-optest "OPTPARSE__OPTION_ARGS にオプションとして解析できた変数名が配列として入っている" \
- "--hoge HOGE" "$COMMAND --hoge val" '${OPTPARSE__OPTION_ARGS["HOGE"]}' "--hoge val"
+optest "LONGOPTION__OPTION_ARGS にオプションとして解析できた変数名が配列として入っている" \
+ "--hoge HOGE" "$COMMAND --hoge val" '${LONGOPTION__OPTION_ARGS["HOGE"]}' "--hoge val"
 fi
 
-optest "IMPORTテスト OPTPARSE_IMPORT=1 ならIMPORT する" \
- "--hugahuga FUGA" "OPTPARSE_IMPORT=1 FUGA=import $COMMAND" '$FUGA' "import"
+optest "IMPORTテスト LONGOPTION_IMPORT=1 ならIMPORT する" \
+ "--hugahuga FUGA" "LONGOPTION_IMPORT=1 FUGA=import $COMMAND" '$FUGA' "import"
 
-optest "IMPORTテスト OPTPARSE_IMPORT=0 ならIMPORT しない" \
- "--hugahuga FUGA" "OPTPARSE_IMPORT=0 FUGA=import $COMMAND" '$FUGA' ""
+optest "IMPORTテスト LONGOPTION_IMPORT=0 ならIMPORT しない" \
+ "--hugahuga FUGA" "LONGOPTION_IMPORT=0 FUGA=import $COMMAND" '$FUGA' ""
 
-optest "IMPORTテスト OPTPARSE_IMPORT 未指定ならIMPORT しない" \
+optest "IMPORTテスト LONGOPTION_IMPORT 未指定ならIMPORT しない" \
  "--hugahuga FUGA" "FUGA=import $COMMAND" '$FUGA' ""
 
-optest "PREFIXテスト OPTPARSE_PREFIX=hoge" \
- "$DOC" "OPTPARSE_PREFIX=hoge_ $COMMAND --hogehoge 1" '
+optest "PREFIXテスト LONGOPTION_PREFIX=hoge" \
+ "$DOC" "LONGOPTION_PREFIX=hoge_ $COMMAND --hogehoge 1" '
 hoge_HOGE=$hoge_HOGE
 HOGE=$HOGE
 ' "
@@ -95,7 +95,7 @@ hoge_HOGE=1
 HOGE=
 "
 optest "PREFIX と IMPORTテスト。 IMPORTされるのは PREFIX のついた方" \
- "$DOC" "OPTPARSE_IMPORT=1 HOGE=1 hoge_HOGE=2 OPTPARSE_PREFIX=hoge_ $COMMAND" '
+ "$DOC" "LONGOPTION_IMPORT=1 HOGE=1 hoge_HOGE=2 LONGOPTION_PREFIX=hoge_ $COMMAND" '
 hoge_HOGE=$hoge_HOGE
 HOGE=$HOGE
 ' "
@@ -107,16 +107,16 @@ HOGE=
 optest "STOP_PARSE, START_PARSE" \
  "test
   --flag1
-OPTPARSE:STOP_PARSE
+LONGOPTION:STOP_PARSE
   --flag2
-OPTPARSE:START_PARSE
+LONGOPTION:START_PARSE
   --flag3
 " "$COMMAND --flag1 --flag2 --flag3" '
 FLAG1=$FLAG1
 FLAG2=$FLAG2
 FLAG3=$FLAG3
 --help--
-$OPTPARSE__HELP_TEXT
+$LONGOPTION__HELP_TEXT
 ' "
 FLAG1=1
 FLAG2=
@@ -132,16 +132,16 @@ test
 optest "STOP_HELP, START_HELP" \
  "test
   --flag1
-OPTPARSE:STOP_HELP
+LONGOPTION:STOP_HELP
   --flag2
-OPTPARSE:START_HELP
+LONGOPTION:START_HELP
   --flag3
 " "$COMMAND --flag1 --flag2 --flag3" '
 FLAG1=$FLAG1
 FLAG2=$FLAG2
 FLAG3=$FLAG3
 --help--
-$OPTPARSE__HELP_TEXT
+$LONGOPTION__HELP_TEXT
 ' "
 FLAG1=1
 FLAG2=1
@@ -160,42 +160,42 @@ optest "引数付きオプションに引数が無い場合にエラーになら
 " "$COMMAND --hoge hoge --huge" '
 HOGE=$HOGE
 HUGE=$HUGE
-OPTPARSE__OTHER_ARGS=${OPTPARSE__OTHER_ARGS[*]}
+LONGOPTION__OTHER_ARGS=${LONGOPTION__OTHER_ARGS[*]}
 ' "
 HOGE=hoge
 HUGE=
-OPTPARSE__OTHER_ARGS=--huge
+LONGOPTION__OTHER_ARGS=--huge
 "
 
 optest "空白もうまく渡せる" \
   " --hoge HOGE " "$COMMAND --hoge \" h \" \" a \" \" b \"" '
 HOGE=[$HOGE]
-OPTPARSE__OTHER_ARGS0=[${OPTPARSE__OTHER_ARGS[0]}]
-OPTPARSE__OTHER_ARGS1=[${OPTPARSE__OTHER_ARGS[1]}]
+LONGOPTION__OTHER_ARGS0=[${LONGOPTION__OTHER_ARGS[0]}]
+LONGOPTION__OTHER_ARGS1=[${LONGOPTION__OTHER_ARGS[1]}]
 ' "
 HOGE=[ h ]
-OPTPARSE__OTHER_ARGS0=[ a ]
-OPTPARSE__OTHER_ARGS1=[ b ]
+LONGOPTION__OTHER_ARGS0=[ a ]
+LONGOPTION__OTHER_ARGS1=[ b ]
 "
 
 if [ ${BASH_VERSINFO[0]} -ge 4 ];then
-optest "空白もうまく渡せる(OPTPARSE__OPTION_ARGS)" \
+optest "空白もうまく渡せる(LONGOPTION__OPTION_ARGS)" \
   " --hoge HOGE " "$COMMAND --hoge \" h \" \" a \" \" b \"" '
-OPTPARSE__OPTION_ARGS[HOGE]=[${OPTPARSE__OPTION_ARGS["HOGE"]}]
+LONGOPTION__OPTION_ARGS[HOGE]=[${LONGOPTION__OPTION_ARGS["HOGE"]}]
 ' "
-OPTPARSE__OPTION_ARGS[HOGE]=[--hoge \ h\ ]
+LONGOPTION__OPTION_ARGS[HOGE]=[--hoge \ h\ ]
 "
 fi
 
 optest "長いテスト" \
-  "$DOC" "OPTPARSE_IMPORT=1 FUGA=import $COMMAND --flag-1 --flag-2 --hogehoge \"aaa \$ \\\" bb\" arg1 arg2" '
+  "$DOC" "LONGOPTION_IMPORT=1 FUGA=import $COMMAND --flag-1 --flag-2 --hogehoge \"aaa \$ \\\" bb\" arg1 arg2" '
 hogehoge=$HOGE
 hugahuga=$FUGA
 flag-1=$FLAG_1
 flag-2=$FLAG_2
 flag-3=$FLAG_3
 flag-4=$FLAG_4
-OPTPARSE__OTHER_ARGS=${OPTPARSE__OTHER_ARGS[@]}
+LONGOPTION__OTHER_ARGS=${LONGOPTION__OTHER_ARGS[@]}
 ' '
 hogehoge=aaa $ " bb
 hugahuga=import
@@ -203,7 +203,7 @@ flag-1=1
 flag-2=1
 flag-3=0
 flag-4=1
-OPTPARSE__OTHER_ARGS=arg1 arg2
+LONGOPTION__OTHER_ARGS=arg1 arg2
 '
 
 echo $hr

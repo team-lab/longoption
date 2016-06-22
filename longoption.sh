@@ -21,34 +21,34 @@
 #
 #  オプションでもフラグでも無い行は無視される
 #
-#  OPTPARSE: で始まる行はヘルプに表示されない(オプション解析だけされる）
-#  OPTPARSE:STOP_PARSE の行があれば、解析を中断する（ヘルプにだけ追加される）
-#  OPTPARSE:START_PARSE の行があれば、解析を再開する
-#  OPTPARSE:STOP_HELP の行があれば、その行以降はヘルプに表示されない（オプション解析だけされる）
-#  OPTPARSE:START_HELP の行があれば、その行以降はヘルプに表示される
+#  LONGOPTION: で始まる行はヘルプに表示されない(オプション解析だけされる）
+#  LONGOPTION:STOP_PARSE の行があれば、解析を中断する（ヘルプにだけ追加される）
+#  LONGOPTION:START_PARSE の行があれば、解析を再開する
+#  LONGOPTION:STOP_HELP の行があれば、その行以降はヘルプに表示されない（オプション解析だけされる）
+#  LONGOPTION:START_HELP の行があれば、その行以降はヘルプに表示される
 #
 #  環境変数
-#    OPTPARSE_IMPORT=1 なら、変数名と同名の環境変数が設定されていればその値を初期値とする
-#    OPTPARSE_PREFIX の環境変数が設定されていれば、変数名がそれを付けたものとする
+#    LONGOPTION_IMPORT=1 なら、変数名と同名の環境変数が設定されていればその値を初期値とする
+#    LONGOPTION_PREFIX の環境変数が設定されていれば、変数名がそれを付けたものとする
 #
 ### 引数
 #
 #  オプション指定の解析が終わったら、引数を解析する
-#  解析できない引数が出た場合は OPTPARSE__OTHER_ARGS に突っ込む
+#  解析できない引数が出た場合は LONGOPTION__OTHER_ARGS に突っ込む
 #
 ### 出力
 #
 #  シェルで eval できる形に出力する
 #  変数名=値 の形
-#  OPTPARSE__HELP_TEXT に標準入力の内容が入っている
-#  OPTPARSE__OTHER_ARGS にオプションとして解析できなかった値が配列として入っている
-#  OPTPARSE__OPTION_ARGS にオプションとして解析できた変数名が配列として入っている（引数指定されたかどうかの判断用）
+#  LONGOPTION__HELP_TEXT に標準入力の内容が入っている
+#  LONGOPTION__OTHER_ARGS にオプションとして解析できなかった値が配列として入っている
+#  LONGOPTION__OPTION_ARGS にオプションとして解析できた変数名が配列として入っている（引数指定されたかどうかの判断用）
 #
 ### 使い方例：
 # 
-# eval "$(cat __EOO__|./scripts/optparse.sh "$@"
+# eval "$(cat __EOO__|./scripts/LONGOPTION.sh "$@"
 #  --hogehoge HOGE オプション
-# OPTPARSE: --hoge HOGE hogehoge のショートオプション的な
+# LONGOPTION: --hoge HOGE hogehoge のショートオプション的な
 #  --opt1 HUGE オプション HUGE
 #  --flag-1 フラグ
 #  --flag-2 flag(小文字ならオプションとして反応しないのでフラグ扱い)
@@ -125,39 +125,39 @@ function map_get
   fi
 }
 
-map_init OPTPARSE__OPTIONDIC
-map_init OPTPARSE__VALUEDIC
-map_init OPTPARSE__NAMEDIC
-OPTPARSE_IMPORT=${OPTPARSE_IMPORT:-0}
-OPTPARSE_PREFIX=${OPTPARSE_PREFIX:-}
-OPTPARSE__HELP_TEXT=""
+map_init LONGOPTION__OPTIONDIC
+map_init LONGOPTION__VALUEDIC
+map_init LONGOPTION__NAMEDIC
+LONGOPTION_IMPORT=${LONGOPTION_IMPORT:-0}
+LONGOPTION_PREFIX=${LONGOPTION_PREFIX:-}
+LONGOPTION__HELP_TEXT=""
 mode_addhelp=1
 mode_parse=1
 : parse stdin
 while IFS= read line; do
-  if [[ "$line" =~ ^OPTPARSE: ]];then
+  if [[ "$line" =~ ^LONGOPTION: ]];then
     case "$line" in
-    "OPTPARSE:STOP_PARSE")
+    "LONGOPTION:STOP_PARSE")
       mode_parse=0
       ;;
-    "OPTPARSE:START_PARSE")
+    "LONGOPTION:START_PARSE")
       mode_parse=1
       ;;
-    "OPTPARSE:STOP_HELP")
+    "LONGOPTION:STOP_HELP")
       mode_addhelp=0
       ;;
-    "OPTPARSE:START_HELP")
+    "LONGOPTION:START_HELP")
       mode_addhelp=1
       ;;
     *)
-      line=${line#OPTPARSE:}
+      line=${line#LONGOPTION:}
     esac
   else
     if [ $mode_addhelp == 1 ];then
-      if [ -z "$OPTPARSE__HELP_TEXT" ];then
-        OPTPARSE__HELP_TEXT="$line"
+      if [ -z "$LONGOPTION__HELP_TEXT" ];then
+        LONGOPTION__HELP_TEXT="$line"
       else
-        OPTPARSE__HELP_TEXT="$OPTPARSE__HELP_TEXT
+        LONGOPTION__HELP_TEXT="$LONGOPTION__HELP_TEXT
 $line"
       fi
     fi
@@ -167,13 +167,13 @@ $line"
   fi
   if [[ "$line" =~ ^\ *--([-a-z0-9]+)\ +([A-Z0-9_]+)(\ |$) ]];then
     optname=${BASH_REMATCH[1]}
-    valuename=${OPTPARSE_PREFIX}${BASH_REMATCH[2]}
-    map_put OPTPARSE__NAMEDIC "--$optname" "OPTION"
-    map_put OPTPARSE__OPTIONDIC "--$optname" "$valuename"
-    if [ $OPTPARSE_IMPORT == 0 ];then
-      map_put OPTPARSE__VALUEDIC "$valuename" ""
+    valuename=${LONGOPTION_PREFIX}${BASH_REMATCH[2]}
+    map_put LONGOPTION__NAMEDIC "--$optname" "OPTION"
+    map_put LONGOPTION__OPTIONDIC "--$optname" "$valuename"
+    if [ $LONGOPTION_IMPORT == 0 ];then
+      map_put LONGOPTION__VALUEDIC "$valuename" ""
     else
-      map_put OPTPARSE__VALUEDIC "$valuename" "${!valuename:-}"
+      map_put LONGOPTION__VALUEDIC "$valuename" "${!valuename:-}"
     fi
   elif [[ "$line" =~ ^\ *--(no-)?([-a-z0-9]+) ]];then
     noflag=${BASH_REMATCH[1]}
@@ -181,74 +181,74 @@ $line"
     valuename=${BASH_REMATCH[2]}
     valuename=$(echo "$valuename"| tr '[a-z]' '[A-Z]')
     valuename=${valuename//-/_}
-    valuename=${OPTPARSE_PREFIX}${valuename}
-    map_put OPTPARSE__NAMEDIC "--no-$optname" "NOFLAG"
-    map_put OPTPARSE__OPTIONDIC "--no-$optname" "$valuename"
-    map_put OPTPARSE__NAMEDIC "--$optname" "FLAG"
-    map_put OPTPARSE__OPTIONDIC "--$optname" "$valuename"
-    if [ $OPTPARSE_IMPORT != 0 ];then
+    valuename=${LONGOPTION_PREFIX}${valuename}
+    map_put LONGOPTION__NAMEDIC "--no-$optname" "NOFLAG"
+    map_put LONGOPTION__OPTIONDIC "--no-$optname" "$valuename"
+    map_put LONGOPTION__NAMEDIC "--$optname" "FLAG"
+    map_put LONGOPTION__OPTIONDIC "--$optname" "$valuename"
+    if [ $LONGOPTION_IMPORT != 0 ];then
       if [ "$noflag" == "no-" ];then
-        map_put OPTPARSE__VALUEDIC "$valuename" 1
+        map_put LONGOPTION__VALUEDIC "$valuename" 1
       else
-        map_put OPTPARSE__VALUEDIC "$valuename" 0
+        map_put LONGOPTION__VALUEDIC "$valuename" 0
       fi
     else
       if [ "$noflag" == "no-" ];then
-        map_put OPTPARSE__VALUEDIC "$valuename" "${!valuename:-1}"
+        map_put LONGOPTION__VALUEDIC "$valuename" "${!valuename:-1}"
       else
-        map_put OPTPARSE__VALUEDIC "$valuename" "${!valuename:-0}"
+        map_put LONGOPTION__VALUEDIC "$valuename" "${!valuename:-0}"
       fi
     fi
   fi
 done
 
 : parse ARGV
-map_init OPTPARSE__OPTION_ARGS
-declare -a OPTPARSE__OTHER_ARGS=("")
+map_init LONGOPTION__OPTION_ARGS
+declare -a LONGOPTION__OTHER_ARGS=("")
 while (( ${#} > 0 ))
 do
-  OPTTYPE="$(map_get OPTPARSE__NAMEDIC "${1}")"
+  OPTTYPE="$(map_get LONGOPTION__NAMEDIC "${1}")"
   case "$OPTTYPE" in
   FLAG)
-    valuename="$(map_get OPTPARSE__OPTIONDIC "${1}")"
-    map_put OPTPARSE__VALUEDIC "$valuename" 1
-    map_put OPTPARSE__OPTION_ARGS "$valuename" "${1}"
+    valuename="$(map_get LONGOPTION__OPTIONDIC "${1}")"
+    map_put LONGOPTION__VALUEDIC "$valuename" 1
+    map_put LONGOPTION__OPTION_ARGS "$valuename" "${1}"
     ;;
   NOFLAG)
-    valuename="$(map_get OPTPARSE__OPTIONDIC "${1}")"
-    map_put OPTPARSE__VALUEDIC "$valuename" 0
-    map_put OPTPARSE__OPTION_ARGS "$valuename" "${1}"
+    valuename="$(map_get LONGOPTION__OPTIONDIC "${1}")"
+    map_put LONGOPTION__VALUEDIC "$valuename" 0
+    map_put LONGOPTION__OPTION_ARGS "$valuename" "${1}"
     ;;
   OPTION)
     if (( ${#} > 1 )) ;then
-      valuename="$(map_get OPTPARSE__OPTIONDIC "${1}")"
-      map_put OPTPARSE__VALUEDIC "$valuename" "${2}"
-      map_put OPTPARSE__OPTION_ARGS "$valuename" $(printf "%q %q" "${1}" "${2}")
+      valuename="$(map_get LONGOPTION__OPTIONDIC "${1}")"
+      map_put LONGOPTION__VALUEDIC "$valuename" "${2}"
+      map_put LONGOPTION__OPTION_ARGS "$valuename" $(printf "%q %q" "${1}" "${2}")
       shift
     else
-      OPTPARSE__OTHER_ARGS=("${OPTPARSE__OTHER_ARGS[@]}" "${1}")
+      LONGOPTION__OTHER_ARGS=("${LONGOPTION__OTHER_ARGS[@]}" "${1}")
     fi
     ;;
   *)
-    OPTPARSE__OTHER_ARGS=("${OPTPARSE__OTHER_ARGS[@]}" "${1}")
+    LONGOPTION__OTHER_ARGS=("${LONGOPTION__OTHER_ARGS[@]}" "${1}")
   esac
   shift
 done
 
 : output options
-for ((i=0; i < ${#OPTPARSE__VALUEDIC__keys[@]}; i++)) {
-  echo "${OPTPARSE__VALUEDIC__keys[$i]}=$(printf %q "${OPTPARSE__VALUEDIC__values[$i]}")"
+for ((i=0; i < ${#LONGOPTION__VALUEDIC__keys[@]}; i++)) {
+  echo "${LONGOPTION__VALUEDIC__keys[$i]}=$(printf %q "${LONGOPTION__VALUEDIC__values[$i]}")"
 }
-declare -p OPTPARSE__HELP_TEXT
-OPTPARSE__OTHER_ARGS=("${OPTPARSE__OTHER_ARGS[@]:1}")
-declare -p OPTPARSE__OTHER_ARGS
+declare -p LONGOPTION__HELP_TEXT
+LONGOPTION__OTHER_ARGS=("${LONGOPTION__OTHER_ARGS[@]:1}")
+declare -p LONGOPTION__OTHER_ARGS
 if [ ${BASH_VERSINFO[0]} -lt 4 ];then
   :
 else
-  declare -A OPTPARSE__OPTION_ARGS
-  for ((i=0; i < ${#OPTPARSE__VALUEDIC__keys[@]}; i++)) {
-    key=OPTPARSE__OPTION_ARGS__keys[$i]
-    OPTPARSE__OPTION_ARGS[$key]="${OPTPARSE__OPTION_ARGS__values[$i]}"
+  declare -A LONGOPTION__OPTION_ARGS
+  for ((i=0; i < ${#LONGOPTION__VALUEDIC__keys[@]}; i++)) {
+    key=LONGOPTION__OPTION_ARGS__keys[$i]
+    LONGOPTION__OPTION_ARGS[$key]="${LONGOPTION__OPTION_ARGS__values[$i]}"
   }
-  declare -p OPTPARSE__OPTION_ARGS
+  declare -p LONGOPTION__OPTION_ARGS
 fi
