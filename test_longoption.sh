@@ -20,6 +20,7 @@ optest(){
 set -e
 set -o pipefail
 RESULT=\$(echo $(printf %q "$DOC")|$COMMAND)
+echo \"\$RESULT\" > $TEMP.result
 eval \"\$RESULT\"
 cat <<__ACTUAL__
 $ACTUAL
@@ -27,8 +28,14 @@ __ACTUAL__
 echo \".\"
 " > $TEMP
   if ! RESULT="$(bash $TEMP)";then
+    echo "***************fail****************"
+    echo "----SCRIPT-----"
     cat $TEMP
     FAILS=("${FAILS[@]}" "$TESTS [ERROR] $TITLE")
+    if [ -e ${TEMP}.result ];then
+      echo "----RESULT-INTERNAL-------"
+      cat ${TEMP}.result
+    fi
     echo "$TESTS ERROR END $TITLE"
     echo $hr
     return
@@ -46,8 +53,7 @@ echo \".\"
     echo "----RESULT--------"
     echo "${RESULT}"
     echo "----RESULT-INTERNAL-------"
-    I=$(echo "$DOC"|bash -c "$COMMAND")
-    echo "$I"
+    cat ${TEMP}.result
     echo "----diff--------"
     set +e
     diff -u <(echo "$EXPECT_DOT") <(echo "$RESULT")

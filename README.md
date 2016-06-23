@@ -156,4 +156,5 @@ Platform Support with Tested System
 
  * [x] GNU bash, version 3.2.25
  * [x] GNU bash, version 3.2.57 ( mac os X )
+ * [x] GNU bash, version 4.2.46
 
