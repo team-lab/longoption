@@ -5,6 +5,7 @@ set -o pipefail
 #set -u
 #set -x
 
+
 function map_not_init
 {
   local name=$1
@@ -164,7 +165,7 @@ do
     if (( ${#} > 1 )) ;then
       valuename="$(map_get LONGOPTION__OPTIONDIC "${1}")"
       map_put LONGOPTION__VALUEDIC "$valuename" "${2}"
-      map_put LONGOPTION__OPTION_ARGS "$valuename" $(printf "%q %q" "${1}" "${2}")
+      map_put LONGOPTION__OPTION_ARGS "$valuename" "$(printf "%q %q" "${1}" "${2}")"
       shift
     else
       LONGOPTION__OTHER_ARGS=("${LONGOPTION__OTHER_ARGS[@]}" "${1}")
@@ -187,8 +188,8 @@ if [ ${BASH_VERSINFO[0]} -lt 4 ];then
   :
 else
   declare -A LONGOPTION__OPTION_ARGS
-  for ((i=0; i < ${#LONGOPTION__VALUEDIC__keys[@]}; i++)) {
-    key=LONGOPTION__OPTION_ARGS__keys[$i]
+  for ((i=0; i < ${#LONGOPTION__OPTION_ARGS__keys[@]}; i++)) {
+    key="${LONGOPTION__OPTION_ARGS__keys[$i]}"
     LONGOPTION__OPTION_ARGS[$key]="${LONGOPTION__OPTION_ARGS__values[$i]}"
   }
   declare -p LONGOPTION__OPTION_ARGS
