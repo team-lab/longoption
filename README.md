@@ -85,17 +85,17 @@ echo OPTION4=$OPTION4 # maybe "O4"
 echo "${LONGOPTION__OTHER_ARGS[@]}"
 ```
 
-is
+↓
 
 ```
-this line is added to `LONGOPTION_HELP_TEXT`
-  --opt1 OPTION1 : effective this . and this line is added to `LONGOPTION_HELP_TEXT` .
-  --opt3 OPTION3 : no effective this. but this line is added to `LONGOPTION_HELP_TEXT` .
+this line is added to `LONGOPTION__HELP_TEXT`
+  --opt1 OPTION1 : effective this . and this line is added to `LONGOPTION__HELP_TEXT` .
+  --opt3 OPTION3 : no effective this. but this line is added to `LONGOPTION__HELP_TEXT` .
 OPTION1=O1
 OPTION2=O2
 OPTION3=
 OPTION4=O4
---opt2 O2 --opt4 O4
+--opt3 O3
 ```
 
 ### parse option (from environment variables)
@@ -113,7 +113,7 @@ eval "$(echo "--v1 V1"|longoption.sh)"
 echo V1=$V1
 ```
 
-is
+↓
 
 ```
 V1=
@@ -127,10 +127,10 @@ eval "$(echo "--v1 V1"|LONGOPTION_IMPORT=1 longoption.sh)"
 echo V1=$V1
 ```
 
-is
+↓
 
 ```
-V1=1
+V1=exists
 ```
 
 `LONGOPTION_PREFIX` is prefix.
@@ -140,7 +140,7 @@ eval "$(echo "--v1 V1"|LONGOPTION_PREFIX=HOGE_ longoption.sh --v1 V1)"
 echo V1=$HOGE_V1
 ```
 
-is
+↓
 
 ```
 V1=V1
