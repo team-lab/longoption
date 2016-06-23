@@ -148,7 +148,7 @@ output variables is
 
  * `LONGOPTION__HELP_TEXT` is help document
  * `LONGOPTION__OTHER_ARGS` is no option arguments (array).
- * `LONGOPTION__OPTION_ARGS` is assoc-map. like `("--opt" = "OPT1")`. (bash v4 only)
+ * `LONGOPTION__OPTION_ARGS` is assoc-map. like `(["VALUENAME"] = "--option value1")`. (bash v4 only)
 
 
 Platform Support with Tested System
