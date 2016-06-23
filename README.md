@@ -6,17 +6,22 @@ arguments parser for bash. only style `--optname VALNAME`.
 ## Example
  
 ```bash
+# set help document
 HELP="
-  --hogehoge HOGE Option1
-  --opt1 HUGE   Option HUGE
-  --verbose     Verbose Option ( default 0 )
-  --no-lineend  This is Flag 2 ( default 1 )
+  --opt1 OPTION1   Option1 has one argument ( default "" )
+  --opt2 OPTION2   Option2 has one argument ( default "" )
+  --flag           flag has no arguments ( if setted, it is 1, default 0 )
+  --no-revflag     revflag has no arguments ( if setted, it is 0, default 1 )
 "
 
+# path help to longpotion.sh and eval result outputs
 eval "$(echo "$HELP"|longoption.sh "$@")"
-echo hogehoge=$HOGE
-echo verbose=$VERBOSE  # 1 or 0
-echo lineend=$LINEEND  # 1 or 0
+
+# you can get option values
+echo opt1=$OPTION1
+echo opt2=$OPTION2
+echo flag=$FLAG
+echo revflag=$REVFLAG
 
 if [ -z "HOGE" ];then
   echo "$LONGOPTION__HELP_TEXT" # HELP TEXT
@@ -41,8 +46,8 @@ longoption search `^\ *--([a-z][-a-z0-9]*)\ +([A-Z][A-Z0-9_]*)(\ |$)` for each l
 if finds,
 
   * `--option-name VALUENAME` is long option has value. set for environment variable names `VALUENAME` to argument .
-  * `--option-name` is flag option. has not value. set for environment variable names `OPTION_NAME` to `1` (default value is `0`).
-  * `--no-option-name` is disable flag option. has not value. set for environment variable names `OPTION_NAME` to `0` (default value is `1`).
+  * `--option-name` is flag option. has not value. set for environment variable names `OPTION_NAME` to `1` (default value is `0`). option to variable name converter is `tr [-a-z] [_A_Z]`.
+  * `--no-option-name` is reverse flag option. has not value. set for environment variable names `OPTION_NAME` to `0` (default value is `1`).
 
   * `--option-name Document` is flag option. variable-name format is `[A-Z][A-Z0-9_]*`.
 
