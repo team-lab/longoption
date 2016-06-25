@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -e
+cd $(dirname $0)
+
 EXPECTS=5
 SUCCESS=0
 FAILS=0
@@ -8,7 +11,9 @@ LINENUM=0
 IN_SCRIPT=
 SCRIPT=
 PATH=.:$PATH
-exec <README.md
+README=$(mktemp)
+cat README.md|tr -d \\r >$README
+exec <$README
 while read line
 do
   LINENUM=$((LINENUM + 1))
@@ -24,6 +29,8 @@ do
             diff -u <(echo "$COMPARE_RESULT") <(echo "$SCRIPT")
             FAILS=$((FAILS + 1))
             SUCCESS=$((SUCCESS - 1))
+          else
+            echo "EXPECTED RESULT $SCRIPT_NAME"
           fi
         fi
         RESULT=
@@ -39,6 +46,8 @@ do
            RESULT=
            FAILS=$((FAILS + 1))
            SUCCESS=$((SUCCESS - 1))
+        else
+          echo RUN SUCCSSS $SCRIPT_NAME
         fi
         ;;
       *)
@@ -73,14 +82,14 @@ $line"
     esac
   fi
 done
-
+rm $README
 
 if [ $FAILS != 0 ];then
   echo "FAILS $FAILS"
   exit -1
 else
   if [ $EXPECTS != $SUCCESS ];then
-    "ERROR EXPECTED TESTS = $EXPECTS, BUT NOW SUCCESS= $SUCCESS"
+    echo "ERROR EXPECTED TESTS = $EXPECTS, BUT NOW SUCCESS= $SUCCESS"
     exit -1
   fi
   echo "SUCCESS $SUCCESS TESTS"

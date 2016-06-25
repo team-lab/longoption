@@ -165,4 +165,5 @@ Platform Support with Tested System
  * [x] GNU bash, version 3.2.57 ( mac os X )
  * [x] GNU bash, version 4.2.25 ( travis-ci )
  * [x] GNU bash, version 4.2.46
+ * [x] GNU bash, version 4.3.42(5)-release (x86_64-pc-msys)
 

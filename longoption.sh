@@ -187,7 +187,7 @@ declare -p LONGOPTION__OTHER_ARGS
 if [ ${BASH_VERSINFO[0]} -lt 4 ];then
   :
 else
-  declare -A LONGOPTION__OPTION_ARGS
+  declare -A LONGOPTION__OPTION_ARGS=()
   for ((i=0; i < ${#LONGOPTION__OPTION_ARGS__keys[@]}; i++)) {
     key="${LONGOPTION__OPTION_ARGS__keys[$i]}"
     LONGOPTION__OPTION_ARGS[$key]="${LONGOPTION__OPTION_ARGS__values[$i]}"
