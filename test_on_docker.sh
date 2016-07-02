@@ -2,7 +2,8 @@
 
 set -e
 
-PWD=$(dirname $0)
+cd "$(dirname $0)"
+PWD="$(pwd)"
 
 #./test.sh
 
@@ -13,7 +14,7 @@ if [ "$OS" == "Windows_NT" ];then
     cat $PWD/$i | tr -d \\r > /tmp/longoption_test/$i
   done
   chmod +x /tmp/longoption_test/*.sh
-  PWD=$(cd /tmp/longoption_test && pwd -W)
+  PWD=/$(cd /tmp/longoption_test && pwd -W)
 fi
 
 for v in $@
