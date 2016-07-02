@@ -1,4 +1,8 @@
 language: bash
+sudo: required
+services:
+    - docker
 script:
     - bash test.sh
+    - bash test_on_docker.sh 3.2 4.0 4.3
 
