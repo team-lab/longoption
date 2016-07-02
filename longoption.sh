@@ -2,7 +2,7 @@
 
 set -e
 set -o pipefail
-set -u
+#set -u
 #set -x
 
 function map_index
