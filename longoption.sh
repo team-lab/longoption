@@ -5,33 +5,13 @@ set -o pipefail
 #set -u
 #set -x
 
-
-function map_not_init
-{
-  local name=$1
-  eval "declare -p ${name}__keys" >/dev/null 2>&1
-  [[ $? != 0 ]]
-  return $?
-}
-
-function map_init
-{
-  local name="$1"
-  eval "${name}__keys=()"
-  eval "${name}__values=()"
-}
-
 function map_index
 {
-  local name=$1
+  local name=${1}[@]
   local key=$2
   local i=0
-  if map_not_init "$name" ;then
-    return
-  fi
-  local keys
-  eval "keys=(\"\${${name}__keys[@]}\")"
-  for ((i=0; i < ${#keys[@]}; i++)) {
+  local keys=("${!name}")
+  for ((i=0; i < ${#keys[@]}; i+=2)) {
     if [[  "${keys[$i]}" = "$key" ]];then
       echo "$i"
       return
@@ -44,17 +24,12 @@ function map_put
   local name="$1"
   local key="$2"
   local value="$3"
-  local i
-  if map_not_init "$name"; then
-    map_init "$name"
-  else
-    i=$(map_index "$name" "$key")
-  fi
+  local i=$(map_index "$name" "$key")
   if [ -z "$i" ];then
-    eval "i=\${#${name}__keys[@]}"
-    eval ${name}__keys[$i]="\$key"
+    eval "i=\${#${name}[@]}"
+    eval ${name}[$i]="\$key"
   fi
-  eval ${name}__values[$i]="\$value"
+  eval ${name}[$((i+1))]="\$value"
 }
 
 function map_get
@@ -63,13 +38,13 @@ function map_get
   local key="$2"
   local i=$(map_index "$name" "$key")
   if [ ! -z "$i" ];then
-    eval echo \"\${${name}__values[$i]}\"
+    eval echo \"\${${name}[$((i+1))]}\"
   fi
 }
 
-map_init LONGOPTION__OPTIONDIC
-map_init LONGOPTION__VALUEDIC
-map_init LONGOPTION__NAMEDIC
+LONGOPTION__OPTIONDIC=()
+LONGOPTION__VALUEDIC=()
+LONGOPTION__NAMEDIC=()
 LONGOPTION_IMPORT=${LONGOPTION_IMPORT:-0}
 LONGOPTION_PREFIX=${LONGOPTION_PREFIX:-}
 LONGOPTION__HELP_TEXT=""
@@ -145,7 +120,7 @@ $line"
 done
 
 : parse ARGV
-map_init LONGOPTION__OPTION_ARGS
+OPTION_ARGS=()
 declare -a LONGOPTION__OTHER_ARGS=("")
 while (( ${#} > 0 ))
 do
@@ -154,18 +129,18 @@ do
   FLAG)
     valuename="$(map_get LONGOPTION__OPTIONDIC "${1}")"
     map_put LONGOPTION__VALUEDIC "$valuename" 1
-    map_put LONGOPTION__OPTION_ARGS "$valuename" "${1}"
+    map_put OPTION_ARGS "$valuename" "${1}"
     ;;
   NOFLAG)
     valuename="$(map_get LONGOPTION__OPTIONDIC "${1}")"
     map_put LONGOPTION__VALUEDIC "$valuename" 0
-    map_put LONGOPTION__OPTION_ARGS "$valuename" "${1}"
+    map_put OPTION_ARGS "$valuename" "${1}"
     ;;
   OPTION)
     if (( ${#} > 1 )) ;then
       valuename="$(map_get LONGOPTION__OPTIONDIC "${1}")"
       map_put LONGOPTION__VALUEDIC "$valuename" "${2}"
-      map_put LONGOPTION__OPTION_ARGS "$valuename" "$(printf "%q %q" "${1}" "${2}")"
+      map_put OPTION_ARGS "$valuename" "$(printf "%q %q" "${1}" "${2}")"
       shift
     else
       LONGOPTION__OTHER_ARGS=("${LONGOPTION__OTHER_ARGS[@]}" "${1}")
@@ -178,8 +153,8 @@ do
 done
 
 : output options
-for ((i=0; i < ${#LONGOPTION__VALUEDIC__keys[@]}; i++)) {
-  echo "${LONGOPTION__VALUEDIC__keys[$i]}=$(printf %q "${LONGOPTION__VALUEDIC__values[$i]}")"
+for ((i=0; i < ${#LONGOPTION__VALUEDIC[@]}; i+=2)) {
+  echo "${LONGOPTION__VALUEDIC[$i]}=$(printf %q "${LONGOPTION__VALUEDIC[$((i+1))]}")"
 }
 declare -p LONGOPTION__HELP_TEXT
 LONGOPTION__OTHER_ARGS=("${LONGOPTION__OTHER_ARGS[@]:1}")
@@ -188,9 +163,10 @@ if [ ${BASH_VERSINFO[0]} -lt 4 ];then
   :
 else
   declare -A LONGOPTION__OPTION_ARGS=()
-  for ((i=0; i < ${#LONGOPTION__OPTION_ARGS__keys[@]}; i++)) {
-    key="${LONGOPTION__OPTION_ARGS__keys[$i]}"
-    LONGOPTION__OPTION_ARGS[$key]="${LONGOPTION__OPTION_ARGS__values[$i]}"
+  for ((i=0; i < ${#OPTION_ARGS[@]}; i+=2)) {
+    key="${OPTION_ARGS[$i]}"
+    LONGOPTION__OPTION_ARGS[$key]="${OPTION_ARGS[$((i+1))]}"
   }
   declare -p LONGOPTION__OPTION_ARGS
 fi
+
