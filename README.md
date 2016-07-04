@@ -104,6 +104,7 @@ OPTION4=O4
 
   * if `LONGOPTION_IMPORT` is `1`, import option value from environment.
   * if `LONGOPTION_PREFIX` dose set, export value has prefix.
+  * if `LONGOPTION_STOP` dose set, export value has prefix.
 
 #### example
 
@@ -147,6 +148,25 @@ echo V1=$HOGE_V1
 ```
 V1=V1
 ```
+
+`LONGOPTION_STOP` is set option end
+
+```bash
+eval "$(echo "
+--v1 V1
+--v2 V2
+"|LONGOPTION_STOP=-- longoption.sh --v1 V1 -- --v2 V2)"
+echo V1=$V1
+echo V2=$V2
+```
+
+↓
+
+```
+V1=V1
+V2=
+```
+
 
 ### Outputs
 
