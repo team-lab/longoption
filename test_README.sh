@@ -3,7 +3,7 @@
 set -e
 cd $(dirname $0)
 
-EXPECTS=5
+EXPECTS=6
 SUCCESS=0
 FAILS=0
 

@@ -47,6 +47,7 @@ LONGOPTION__VALUEDIC=()
 LONGOPTION__NAMEDIC=()
 LONGOPTION_IMPORT=${LONGOPTION_IMPORT:-0}
 LONGOPTION_PREFIX=${LONGOPTION_PREFIX:-}
+LONGOPTION_STOP=${LONGOPTION_STOP:-}
 LONGOPTION__HELP_TEXT=""
 mode_addhelp=1
 mode_parse=1
@@ -124,6 +125,11 @@ OPTION_ARGS=()
 declare -a LONGOPTION__OTHER_ARGS=("")
 while (( ${#} > 0 ))
 do
+  if [ "${1}" == "${LONGOPTION_STOP}" ];then
+    shift
+    LONGOPTION__OTHER_ARGS=("${LONGOPTION__OTHER_ARGS[@]}" "${@}")
+    break
+  fi
   OPTTYPE="$(map_get LONGOPTION__NAMEDIC "${1}")"
   case "$OPTTYPE" in
   FLAG)

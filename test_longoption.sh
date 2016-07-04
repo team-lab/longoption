@@ -109,6 +109,46 @@ hoge_HOGE=2
 HOGE=
 "
 
+optest "LONGOPTION_STOP is stop option parsing" \
+ "--opt VALNAME
+--opt2 VALUE2
+-- stop option parsing
+" "LONGOPTION_STOP=-- $COMMAND --opt val -- --opt2 hoge huga" '
+VALNAME=$VALNAME
+VALUE2=$VALUE2
+LONGOPTION__OTHER_ARGS=${LONGOPTION__OTHER_ARGS[@]}
+' '
+VALNAME=val
+VALUE2=
+LONGOPTION__OTHER_ARGS=--opt2 hoge huga
+'
+
+optest "LONGOPTION_STOP is stop option parsing (if not exists test)" \
+ "--opt VALNAME
+--opt2 VALUE2
+-- stop option parsing
+" "LONGOPTION_STOP=-- $COMMAND --opt val --opt2 hoge huga" '
+VALNAME=$VALNAME
+VALUE2=$VALUE2
+LONGOPTION__OTHER_ARGS=${LONGOPTION__OTHER_ARGS[@]}
+' '
+VALNAME=val
+VALUE2=hoge
+LONGOPTION__OTHER_ARGS=huga
+'
+
+optest "no error when LONGOPTION_STOP is last" \
+ "--opt VALNAME
+--opt2 VALUE2
+-- stop option parsing
+" "LONGOPTION_STOP=-- $COMMAND --opt val --" '
+VALNAME=$VALNAME
+VALUE2=$VALUE2
+' '
+VALNAME=val
+VALUE2=
+'
+
 
 optest "STOP_PARSE, START_PARSE" \
  "test
