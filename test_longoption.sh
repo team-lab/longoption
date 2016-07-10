@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-COMMAND=$(dirname $0)/longoption.sh
+COMMAND="$(dirname $0)/longoption.sh \"\$DOC\""
 FAILS=()
 TESTS=0
 hr=--------------------------------------------
@@ -11,7 +11,7 @@ optest(){
   echo "TEST $TESTS: $TITLE"
   local TEMP=$(mktemp)
   local DOC=$2
-  local COMMAND=$3
+  local COMMAND=${3/ "__DOC__"/ \"${2}\"}
   local ACTUAL="$4"
   local EXPECT="$5"
   local EXPECT_DOT="$EXPECT
@@ -19,7 +19,8 @@ optest(){
   echo "#!/bin/bash
 set -e
 set -o pipefail
-RESULT=\$(echo $(printf %q "$DOC")|$COMMAND)
+DOC=\"$DOC\"
+RESULT=\$($COMMAND)
 echo \"\$RESULT\" > $TEMP.result
 eval \"\$RESULT\"
 cat <<__ACTUAL__

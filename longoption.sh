@@ -47,11 +47,11 @@ if [ "$LONGOPTION" == "--prefix LONGOPTION_" ];then
   LONGOPTION_STOP=
   LONGOPTION_IMPORT=0
 else
-  eval "$(echo '
+  eval "$(LONGOPTION='--prefix LONGOPTION_' $0 '
     --import
     --prefix PREFIX
     --stop STOP
-  '|LONGOPTION='--prefix LONGOPTION_' $0 $LONGOPTION)"
+  ' $LONGOPTION)"
 fi
 LONGOPTION__OPTIONDIC=()
 LONGOPTION__VALUEDIC=()
@@ -59,7 +59,10 @@ LONGOPTION__NAMEDIC=()
 LONGOPTION__HELP_TEXT=""
 mode_addhelp=1
 mode_parse=1
-: parse stdin
+: parse $1
+DOC=$1
+shift
+exec <<<"$DOC"
 while IFS= read line; do
   if [[ "$line" =~ ^LONGOPTION: ]];then
     case "$line" in
