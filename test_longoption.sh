@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-COMMAND=$(dirname $0)/longoption.sh
+COMMAND="$(dirname $0)/longoption.sh \"\$DOC\""
 FAILS=()
 TESTS=0
 hr=--------------------------------------------
@@ -11,7 +11,7 @@ optest(){
   echo "TEST $TESTS: $TITLE"
   local TEMP=$(mktemp)
   local DOC=$2
-  local COMMAND=$3
+  local COMMAND=${3/ "__DOC__"/ \"${2}\"}
   local ACTUAL="$4"
   local EXPECT="$5"
   local EXPECT_DOT="$EXPECT
@@ -19,7 +19,8 @@ optest(){
   echo "#!/bin/bash
 set -e
 set -o pipefail
-RESULT=\$(echo $(printf %q "$DOC")|$COMMAND)
+DOC=\"$DOC\"
+RESULT=\$($COMMAND)
 echo \"\$RESULT\" > $TEMP.result
 eval \"\$RESULT\"
 cat <<__ACTUAL__
@@ -83,25 +84,25 @@ optest "LONGOPTION__OPTION_ARGS にオプションとして解析できた変数
  "--hoge HOGE" "$COMMAND --hoge val" '${LONGOPTION__OPTION_ARGS["HOGE"]}' "--hoge val"
 fi
 
-optest "IMPORTテスト LONGOPTION_IMPORT=1 ならIMPORT する" \
- "--hugahuga FUGA" "LONGOPTION_IMPORT=1 FUGA=import $COMMAND" '$FUGA' "import"
+optest "--import is import from envirionment variables" \
+ "--hugahuga FUGA" "LONGOPTION='--import' FUGA=import $COMMAND" '$FUGA' "import"
 
-optest "IMPORTテスト LONGOPTION_IMPORT=0 ならIMPORT しない" \
- "--hugahuga FUGA" "LONGOPTION_IMPORT=0 FUGA=import $COMMAND" '$FUGA' ""
+optest "--no-import" \
+ "--hugahuga FUGA" "LONGOPTION='--no-import' FUGA=import $COMMAND" '$FUGA' ""
 
-optest "IMPORTテスト LONGOPTION_IMPORT 未指定ならIMPORT しない" \
+optest "--import is not set" \
  "--hugahuga FUGA" "FUGA=import $COMMAND" '$FUGA' ""
 
-optest "PREFIXテスト LONGOPTION_PREFIX=hoge" \
- "$DOC" "LONGOPTION_PREFIX=hoge_ $COMMAND --hogehoge 1" '
+optest "PREFIX LONGOPTION='--prefix hoge'" \
+ "$DOC" "LONGOPTION='--prefix hoge_' $COMMAND --hogehoge 1" '
 hoge_HOGE=$hoge_HOGE
 HOGE=$HOGE
 ' "
 hoge_HOGE=1
 HOGE=
 "
-optest "PREFIX と IMPORTテスト。 IMPORTされるのは PREFIX のついた方" \
- "$DOC" "LONGOPTION_IMPORT=1 HOGE=1 hoge_HOGE=2 LONGOPTION_PREFIX=hoge_ $COMMAND" '
+optest "PREFIX and IMPORT." \
+ "$DOC" "HOGE=1 hoge_HOGE=2 LONGOPTION='--import --prefix hoge_' $COMMAND" '
 hoge_HOGE=$hoge_HOGE
 HOGE=$HOGE
 ' "
@@ -109,11 +110,11 @@ hoge_HOGE=2
 HOGE=
 "
 
-optest "LONGOPTION_STOP is stop option parsing" \
+optest "LONGOPTION='--stop STOP' is stop option parsing" \
  "--opt VALNAME
 --opt2 VALUE2
 -- stop option parsing
-" "LONGOPTION_STOP=-- $COMMAND --opt val -- --opt2 hoge huga" '
+" "LONGOPTION='--stop --' $COMMAND --opt val -- --opt2 hoge huga" '
 VALNAME=$VALNAME
 VALUE2=$VALUE2
 LONGOPTION__OTHER_ARGS=${LONGOPTION__OTHER_ARGS[@]}
@@ -123,11 +124,11 @@ VALUE2=
 LONGOPTION__OTHER_ARGS=--opt2 hoge huga
 '
 
-optest "LONGOPTION_STOP is stop option parsing (if not exists test)" \
+optest "LONGOPTION='--stop --' is stop option parsing (if not exists test)" \
  "--opt VALNAME
 --opt2 VALUE2
 -- stop option parsing
-" "LONGOPTION_STOP=-- $COMMAND --opt val --opt2 hoge huga" '
+" "LONGOPTION='--stop --' $COMMAND --opt val --opt2 hoge huga" '
 VALNAME=$VALNAME
 VALUE2=$VALUE2
 LONGOPTION__OTHER_ARGS=${LONGOPTION__OTHER_ARGS[@]}
@@ -137,11 +138,11 @@ VALUE2=hoge
 LONGOPTION__OTHER_ARGS=huga
 '
 
-optest "no error when LONGOPTION_STOP is last" \
+optest "no error when LONGOPTION='--stop --' is last" \
  "--opt VALNAME
 --opt2 VALUE2
 -- stop option parsing
-" "LONGOPTION_STOP=-- $COMMAND --opt val --" '
+" "LONGOPTION='--stop --' $COMMAND --opt val --" '
 VALNAME=$VALNAME
 VALUE2=$VALUE2
 ' '
@@ -234,7 +235,7 @@ LONGOPTION__OPTION_ARGS[HOGE]=[--hoge \ h\ ]
 fi
 
 optest "長いテスト" \
-  "$DOC" "LONGOPTION_IMPORT=1 FUGA=import $COMMAND --flag-1 --flag-2 --hogehoge \"aaa \$ \\\" bb\" arg1 arg2" '
+  "$DOC" "LONGOPTION='--import' FUGA=import $COMMAND --flag-1 --flag-2 --hogehoge \"aaa \$ \\\" bb\" arg1 arg2" '
 hogehoge=$HOGE
 hugahuga=$FUGA
 flag-1=$FLAG_1

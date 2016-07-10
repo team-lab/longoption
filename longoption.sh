@@ -42,16 +42,27 @@ function map_get
   fi
 }
 
+if [ "$LONGOPTION" == "--prefix LONGOPTION_" ];then
+  LONGOPTION_PREFIX=LONGOPTION_
+  LONGOPTION_STOP=
+  LONGOPTION_IMPORT=0
+else
+  eval "$(LONGOPTION='--prefix LONGOPTION_' $0 '
+    --import
+    --prefix PREFIX
+    --stop STOP
+  ' $LONGOPTION)"
+fi
 LONGOPTION__OPTIONDIC=()
 LONGOPTION__VALUEDIC=()
 LONGOPTION__NAMEDIC=()
-LONGOPTION_IMPORT=${LONGOPTION_IMPORT:-0}
-LONGOPTION_PREFIX=${LONGOPTION_PREFIX:-}
-LONGOPTION_STOP=${LONGOPTION_STOP:-}
 LONGOPTION__HELP_TEXT=""
 mode_addhelp=1
 mode_parse=1
-: parse stdin
+: parse $1
+DOC=$1
+shift
+exec <<<"$DOC"
 while IFS= read line; do
   if [[ "$line" =~ ^LONGOPTION: ]];then
     case "$line" in

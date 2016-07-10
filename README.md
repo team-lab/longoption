@@ -17,7 +17,7 @@ HELP="
 "
 
 # path help to longpotion.sh and eval result outputs
-eval "$(echo "$HELP"|longoption.sh "$@")"
+eval "$(longoption.sh "$HELP" "$@")"
 
 # you can get option values
 echo opt1=$OPTION1
@@ -66,7 +66,7 @@ if finds,
 #### example
 
 ```bash
-eval "$(cat <<"__EOO__"|longoption.sh --opt1 O1 --opt2 O2 --opt3 O3 --opt4 O4
+eval "$(longoption.sh "$(cat <<'__EOO__'
 this line is added to `LONGOPTION__HELP_TEXT`
   --opt1 OPTION1 : effective this . and this line is added to `LONGOPTION__HELP_TEXT` .
 LONGOPTION: --opt2 OPTION2 : effective this. this line is not added to `LONGOPTION__HELP_TEXT` .
@@ -77,7 +77,7 @@ LONGOPTION:STOP_HELP
   --opt4 OPTION4 : effective this. but this line is not added to `LONGOPTION__HELP_TEXT` .
 LONGOPTION:START_HELP
 __EOO__
-)"
+)" --opt1 O1 --opt2 O2 --opt3 O3 --opt4 O4)"
 
 echo "$LONGOPTION__HELP_TEXT"
 echo OPTION1=$OPTION1 # maybe "O1"
@@ -102,17 +102,19 @@ OPTION4=O4
 
 ### parse option (from environment variables)
 
-  * if `LONGOPTION_IMPORT` is `1`, import option value from environment.
-  * if `LONGOPTION_PREFIX` dose set, export value has prefix.
-  * if `LONGOPTION_STOP` dose set, export value has prefix.
+parse option set from environment names 'LONGOPTION'.
+
+  * if `--import` is setted, import option value from environment.
+  * if `--prefix PREFIX` dose set, export value has prefix.
+  * if `--stop STOPWORD` dose set, stop option parsing after it.
 
 #### example
 
-if you can't use `LONGOPTION_IMPORT`, no exists arguments is set brank.
+if you can't use `LONGOPTION`, no exists arguments is set brank.
 
 ```bash
 export V1=exists
-eval "$(echo "--v1 V1"|longoption.sh)"
+eval "$(longoption.sh "--v1 V1")"
 echo V1=$V1
 ```
 
@@ -122,11 +124,11 @@ echo V1=$V1
 V1=
 ```
 
-if you set use `LONGOPTION_IMPORT=1`, set from environment variables.
+if you set use `LONGOPTION='--imoprt'`, set from environment variables.
 
 ```bash
 export V1=exists
-eval "$(echo "--v1 V1"|LONGOPTION_IMPORT=1 longoption.sh)"
+eval "$(LONGOPTION='--import' longoption.sh "--v1 V1")"
 echo V1=$V1
 ```
 
@@ -136,10 +138,10 @@ echo V1=$V1
 V1=exists
 ```
 
-`LONGOPTION_PREFIX` is prefix.
+`LONGOPTION='--prefix PREFIX'` is prefix.
 
 ```bash
-eval "$(echo "--v1 V1"|LONGOPTION_PREFIX=HOGE_ longoption.sh --v1 V1)"
+eval "$(LONGOPTION='--prefix HOGE_' longoption.sh "--v1 V1" --v1 V1)"
 echo V1=$HOGE_V1
 ```
 
@@ -152,10 +154,10 @@ V1=V1
 `LONGOPTION_STOP` is set option end
 
 ```bash
-eval "$(echo "
+eval "$(LONGOPTION='--stop --' longoption.sh "
 --v1 V1
 --v2 V2
-"|LONGOPTION_STOP=-- longoption.sh --v1 V1 -- --v2 V2)"
+" --v1 V1 -- --v2 V2)"
 echo V1=$V1
 echo V2=$V2
 ```
