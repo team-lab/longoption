@@ -37,7 +37,7 @@ if [ ${#LONGOPTION__OTHER_ARGS[@]} != 0 ];then
 fi
 ```
 
- * Get option settings from help document (from stdin).
+ * Get option settings from help document (from first argument).
  * Output 'bash script'. you can `eval` this and get options as environment variables.
  * Can get un parsed options.
 
