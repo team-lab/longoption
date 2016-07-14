@@ -66,8 +66,7 @@ if finds,
 #### example
 
 ```bash
-eval "$(longoption.sh "$(cat <<'__EOO__'
-this line is added to `LONGOPTION__HELP_TEXT`
+eval "$(longoption.sh 'this line is added to `LONGOPTION__HELP_TEXT`
   --opt1 OPTION1 : effective this . and this line is added to `LONGOPTION__HELP_TEXT` .
 LONGOPTION: --opt2 OPTION2 : effective this. this line is not added to `LONGOPTION__HELP_TEXT` .
 LONGOPTION:STOP_PARSE
@@ -75,9 +74,8 @@ LONGOPTION:STOP_PARSE
 LONGOPTION:START_PARSE
 LONGOPTION:STOP_HELP
   --opt4 OPTION4 : effective this. but this line is not added to `LONGOPTION__HELP_TEXT` .
-LONGOPTION:START_HELP
-__EOO__
-)" --opt1 O1 --opt2 O2 --opt3 O3 --opt4 O4)"
+LONGOPTION:START_HELP' \
+  --opt1 O1 --opt2 O2 --opt3 O3 --opt4 O4)"
 
 echo "$LONGOPTION__HELP_TEXT"
 echo OPTION1=$OPTION1 # maybe "O1"
