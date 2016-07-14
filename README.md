@@ -187,3 +187,7 @@ Platform Support with Tested System
  * [x] GNU bash, version 4.2.46
  * [x] GNU bash, version 4.3.42(5)-release (x86_64-pc-msys)
 
+Licence
+-------
+
+[MIT License](LICENCE.txt)
