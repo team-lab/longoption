@@ -30,7 +30,7 @@ if [ -z "HOGE" ];then
   exit
 fi
 
-if [ ${#LONGOPTION__OTHER_ARGS[@]} != 0 ];then
+if [ ${#LONGOPTION__OTHER_ARGS[@]} -ne 0 ];then
   echo "Unknown options ${LONGOPTION__OTHER_ARGS[@]}"
   echo "$LONGOPTION__HELP_TEXT"
   exit -1

@@ -1,18 +1,30 @@
 #!/bin/bash
 
-set -e
+set -e -u
 cd $(dirname $0)
 
-EXPECTS=6
+EXPECTS=$1
+README_FILE=$2
 SUCCESS=0
 FAILS=0
+
+function do_script
+{
+  local script="$1"
+  set --
+  set +e +u
+  eval "$script"
+  local ret=$?
+  set -e -u
+  return $ret
+}
 
 LINENUM=0
 IN_SCRIPT=
 SCRIPT=
 PATH=.:$PATH
 README=$(mktemp)
-cat README.md|tr -d \\r >$README
+cat $README_FILE|tr -d \\r >$README
 exec <$README
 while read line
 do
@@ -36,13 +48,17 @@ do
         RESULT=
         ;;
       bash)
-        RESULT=$(eval "$SCRIPT")
+        set +e
+        RESULT=$(do_script "$SCRIPT")
         ERRORCODE=$?
+        set -e
         SUCCESS=$((SUCCESS + 1))
         if [ $ERRORCODE != 0 ];then
            echo "-- $SCRIPT_NAME -------------------------------------------"
            echo ERROR $ERRORCODE
            echo "$SCRIPT"
+           echo "-- STDOUT ----------------------"
+           echo "$RESULT"
            RESULT=
            FAILS=$((FAILS + 1))
            SUCCESS=$((SUCCESS - 1))
@@ -68,7 +84,7 @@ $line"
     case "$line" in
     '```bash')
       IN_SCRIPT="bash"
-      SCRIPT_NAME="README.md:$LINENUM"
+      SCRIPT_NAME="$README_FILE:$LINENUM"
       SCRIPT="1"
       ;;
     '↓')
