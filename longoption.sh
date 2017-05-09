@@ -46,11 +46,19 @@ if [ "$LONGOPTION" == "--prefix LONGOPTION_" ];then
   LONGOPTION_PREFIX=LONGOPTION_
   LONGOPTION_STOP=
   LONGOPTION_IMPORT=0
+  LONGOPTION_HELP_FLAG=
+  LONGOPTION_HELP_EXIT=0
+  LONGOPTION_OTHER_ARGS_EXIT=
+  LONGOPTION_OTHER_ARGS_EXIT_MESSAGE="Unknonw options:"
 else
   eval "$(LONGOPTION='--prefix LONGOPTION_' $0 '
     --import
     --prefix PREFIX
     --stop STOP
+    --help-flag HELP_FLAG
+    --help-exit HELP_EXIT
+    --other-args-exit OTHER_ARGS_EXIT
+    --other-args-exit-message OTHER_ARGS_EXIT_MESSAGE
   ' $LONGOPTION)"
 fi
 LONGOPTION__OPTIONDIC=()
@@ -133,7 +141,7 @@ done
 
 : parse ARGV
 OPTION_ARGS=()
-declare -a LONGOPTION__OTHER_ARGS=("")
+declare -a LONGOPTION__OTHER_ARGS=()
 while (( ${#} > 0 ))
 do
   if [ "${1}" == "${LONGOPTION_STOP}" ];then
@@ -170,6 +178,23 @@ do
 done
 
 : output options
+if [ -n "$LONGOPTION_HELP_FLAG" -a "$(map_get LONGOPTION__VALUEDIC "$LONGOPTION_HELP_FLAG")" == "1" ];then
+  printf "
+echo %q
+exit %d" "$LONGOPTION__HELP_TEXT" "$LONGOPTION_HELP_EXIT"
+  exit
+fi
+if [ -n "$LONGOPTION_OTHER_ARGS_EXIT" -a "${#LONGOPTION__OTHER_ARGS[@]}" -ne 0 ];then
+  printf "
+echo %q
+echo
+echo %q
+exit %d
+" "$LONGOPTION__HELP_TEXT" \
+  "$LONGOPTION_OTHER_ARGS_EXIT_MESSAGE $(echo "${LONGOPTION__OTHER_ARGS[@]}")" \
+  "$LONGOPTION_OTHER_ARGS_EXIT"
+  exit
+fi
 for ((i=0; i < ${#LONGOPTION__VALUEDIC[@]}; i+=2)) {
   echo "${LONGOPTION__VALUEDIC[$i]}=$(printf %q "${LONGOPTION__VALUEDIC[$((i+1))]}")"
 }
