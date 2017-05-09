@@ -3,6 +3,8 @@ longoption
 
 [![Build Status](https://travis-ci.org/team-lab/longoption.svg?branch=master)](https://travis-ci.org/team-lab/longoption)
 
+[English](README.md)
+
 bash の 引数解析器です. 以下の問題を解決します
 
  * bash で引数を扱うと、コードの半分以上が引数の解析に費やされる
@@ -46,6 +48,27 @@ fi
  * 'bash script' を出力します. 出力を `eval` することで環境変数として引数を環境変数から利用できます
  * ヘルプテキストで指定されなかった引数を別の変数として利用できます
 
+### どのように動くか
+
+longoption は自らの第一引数の内容を解析して、それに基づき、後続の引数を解析し、環境変数に設定するための bash スクリプトを標準出力に出力します. longoption を単体で使うと
+
+```bash
+./longoption.sh "Option:
+  --option1 VALUE_NAME1" --option1 V1
+```
+
+↓
+
+```
+VALUE_NAME1=V1
+declare -- LONGOPTION__HELP_TEXT="Option:
+--option1 VALUE_NAME1"
+declare -a LONGOPTION__OTHER_ARGS='()'
+```
+
+このような出力を得ることができます。
+
+
 ### ヘルプテキストはどのように解析されるか
 
 longoption は最初の引数をヘルプテキストとして解析します. `--optname VALNAME` というスタイルにのみ対応しています.
@@ -57,6 +80,7 @@ longoption は `^\ *--([a-z][-a-z0-9]*)\ +([A-Z][A-Z0-9_]*)(\ |$)` をヘルプ�
   * `--no-option-name` の形式なら、反転フラグと認識します. 通常のフラグと違って、デフォルトが `1` になります
 
   * 注意：例えば `--option-name Document` はフラグです. 変数名として `[A-Z][A-Z0-9_]*` （英数大文字とアンダーバー）しか指定できないからです
+
 
 ### 解析オプション
 

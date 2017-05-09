@@ -5,6 +5,8 @@ longoption
 
 arguments parser for bash. only style `--optname VALNAME`.
 
+[Japanese](README.ja.md)
+
 ## Example
  
 ```bash
