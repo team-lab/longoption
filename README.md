@@ -43,7 +43,7 @@ fi
 
 ### how to parse
 
-longoption read document from stdin.
+longoption read document from first argument.
 longoption search `^\ *--([a-z][-a-z0-9]*)\ +([A-Z][A-Z0-9_]*)(\ |$)` for each lines.
 if finds,
 
