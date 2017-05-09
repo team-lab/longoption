@@ -66,21 +66,21 @@ echo \".\"
 
 
 DOC="
- --hogehoge HOGE オプション
- LONGOPTION: --hoge HOGE hogehoge のショートオプション的な
+ --hogehoge HOGE option
+ LONGOPTION: --hoge HOGE hogehoge is like short option
  --hugahuga FUGA
-  --opt1 HUGE オプション HUGE
-  --flag-1 フラグ
-  --no-flag-2 反転フラグ
-  --flag-3 flag(小文字ならオプションとして反応しないのでフラグ扱い)
-  --no-flag-4 反転フラグ
+  --opt1 HUGE option HUGE
+  --flag-1 is flag
+  --no-flag-2 is reverse flag
+  --flag-3 Flag
+  --no-flag-4 Reverse flag
 "
 
-optest "DOC で指定した変数が取れる" \
+optest "can get value" \
  "--opt VALNAME" "$COMMAND --opt val" 'VALNAME=$VALNAME' 'VALNAME=val'
 
 if [ ${BASH_VERSINFO[0]} -ge 4 ];then
-optest "LONGOPTION__OPTION_ARGS にオプションとして解析できた変数名が配列として入っている" \
+optest "LONGOPTION__OPTION_ARGS has parsed options as array" \
  "--hoge HOGE" "$COMMAND --hoge val" '${LONGOPTION__OPTION_ARGS["HOGE"]}' "--hoge val"
 fi
 
@@ -200,7 +200,7 @@ test
 
 "
 
-optest "引数付きオプションに引数が無い場合にエラーにならない" \
+optest "no error if last option need argment" \
  "
 --hoge HOGE
 --huge HUGE
@@ -214,7 +214,7 @@ HUGE=
 LONGOPTION__OTHER_ARGS=--huge
 "
 
-optest "空白もうまく渡せる" \
+optest "can use space chars" \
   " --hoge HOGE " "$COMMAND --hoge \" h \" \" a \" \" b \"" '
 HOGE=[$HOGE]
 LONGOPTION__OTHER_ARGS0=[${LONGOPTION__OTHER_ARGS[0]}]
@@ -226,7 +226,7 @@ LONGOPTION__OTHER_ARGS1=[ b ]
 "
 
 if [ ${BASH_VERSINFO[0]} -ge 4 ];then
-optest "空白もうまく渡せる(LONGOPTION__OPTION_ARGS)" \
+optest "can use space chars (LONGOPTION__OPTION_ARGS)" \
   " --hoge HOGE " "$COMMAND --hoge \" h \" \" a \" \" b \"" '
 LONGOPTION__OPTION_ARGS[HOGE]=[${LONGOPTION__OPTION_ARGS["HOGE"]}]
 ' "
@@ -234,7 +234,7 @@ LONGOPTION__OPTION_ARGS[HOGE]=[--hoge \ h\ ]
 "
 fi
 
-optest "長いテスト" \
+optest "complex test" \
   "$DOC" "LONGOPTION='--import' FUGA=import $COMMAND --flag-1 --flag-2 --hogehoge \"aaa \$ \\\" bb\" arg1 arg2" '
 hogehoge=$HOGE
 hugahuga=$FUGA
