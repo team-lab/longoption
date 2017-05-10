@@ -137,7 +137,7 @@ done
 
 : parse ARGV
 OPTION_ARGS=()
-declare -a LONGOPTION__OTHER_ARGS=("")
+declare -a LONGOPTION__OTHER_ARGS=()
 while (( ${#} > 0 ))
 do
   if [ "${1}" == "${LONGOPTION_STOP}" ];then
@@ -184,7 +184,6 @@ for ((i=0; i < ${#LONGOPTION__VALUEDIC[@]}; i+=2)) {
   echo "${LONGOPTION__VALUEDIC[$i]}=$(printf %q "${LONGOPTION__VALUEDIC[$((i+1))]}")"
 }
 declare -p LONGOPTION__HELP_TEXT
-LONGOPTION__OTHER_ARGS=("${LONGOPTION__OTHER_ARGS[@]:1}")
 declare -p LONGOPTION__OTHER_ARGS
 if [ ${BASH_VERSINFO[0]} -lt 4 ];then
   :
