@@ -48,7 +48,7 @@ fi
  * 'bash script' を出力します. 出力を `eval` することで環境変数として引数を環境変数から利用できます
  * ヘルプテキストで指定されなかった引数を別の変数として利用できます
 
-### どのように動くか
+## どのように動くか
 
 longoption は自らの第一引数の内容を解析して、それに基づき、後続の引数を解析し、環境変数に設定するための bash スクリプトを標準出力に出力します. longoption を単体で使うと
 
@@ -64,15 +64,20 @@ VALUE_NAME1=V1
 declare -- LONGOPTION__HELP_TEXT="Option:
 --option1 VALUE_NAME1"
 declare -a LONGOPTION__OTHER_ARGS='()'
+declare -A LONGOPTION__OPTION_ARGS='([VALUE_NAME1]="--option1 V1" )' # only bash 4
 ```
 
-このような出力を得ることができます。
+このような出力を得ることができます。 `eval` を用いて、これを実行することが想定されています. 引数指定された値以外に、次の変数を出力します.
+
+ * `LONGOPTION__HELP_TEXT` に、ヘルプテキストが代入されています.
+ * `LONGOPTION__OTHER_ARGS` に、ヘルプテキストで指定された以外の（解析から漏れた）引数が配列として代入されています.
+ * `LONGOPTION__OPTION_ARGS` に、 `(["VALUENAME"] = "--option value1")` のような形の連想配列が代入されています. (bash v4 only)
 
 
 ### ヘルプテキストはどのように解析されるか
 
 longoption は最初の引数をヘルプテキストとして解析します. `--optname VALNAME` というスタイルにのみ対応しています.
-longoption は `^\ *--([a-z][-a-z0-9]*)\ +([A-Z][A-Z0-9_]*)(\ |$)` をヘルプテキストの各行から探します
+ヘルプテキストの各行から `^\ *--([a-z][-a-z0-9]*)\ +([A-Z][A-Z0-9_]*)(\ |$)` を探します.
 もし見つかったら,
 
   * `--option-name VALUENAME` の形式なら、値付きの引数と認識します. この形式の引数が見つかると、環境変数 `VALUENAME` に値を設定します（引数が見つからなければ空文字を設定します）
@@ -86,11 +91,11 @@ longoption は `^\ *--([a-z][-a-z0-9]*)\ +([A-Z][A-Z0-9_]*)(\ |$)` をヘルプ�
 
 ヘルプテキストに `LONGOPTION:` で始まる行があると、 longoption は解析モードを変更します.
 
-  * `LONGOPTION:` は、"この行はヘルプテキストに含まない"と認識します。ただし、引数設定としては解析されます。ヘルプテキストに表示したくない引数設定などを記述します。
-  * `LONGOPTION:STOP_PARSE` が見つかると、その行以降は、引数設定の解析を中断します.( ただし、ヘルプテキストの記述としては中断されません ) 引数設定としてご認識されそうな文章をヘルプテキストに追加する時に利用します。
-  * `LONGOPTION:START_PARSE` が見つかると、中断していた引数設定の解析を再開します。
-  * `LONGOPTION:STOP_HELP` が見つかると、その行以降は、ヘルプテキストとして追加しません.( ただし、引数設定の解析は中断されません ) 隠しオプション的なものを大量に追加する時に利用します。
-  * `LONGOPTION:START_HELP` が見つかると、中断していたヘルプテキストへの追加を再開します。
+  * `LONGOPTION:` は、"この行はヘルプテキストに含まない"と認識します. ただし、引数設定としては解析されます. ヘルプテキストに表示したくない引数設定などを記述します. 
+  * `LONGOPTION:STOP_PARSE` が見つかると、その行以降は、引数設定の解析を中断します.( ただし、ヘルプテキストの記述としては中断されません ) 引数設定としてご認識されそうな文章をヘルプテキストに追加する時に利用します. 
+  * `LONGOPTION:START_PARSE` が見つかると、中断していた引数設定の解析を再開します. 
+  * `LONGOPTION:STOP_HELP` が見つかると、その行以降は、ヘルプテキストとして追加しません.( ただし、引数設定の解析は中断されません ) 隠しオプション的なものを大量に追加する時に利用します. 
+  * `LONGOPTION:START_HELP` が見つかると、中断していたヘルプテキストへの追加を再開します. 
 
 #### example
 
@@ -130,43 +135,58 @@ OPTION4=O4
 
 ### 動作オプション (環境変数で指定します)
 
-環境変数 'LONGOPTION' を設定することで、 longoption の動作を変更することができます。
+環境変数 'LONGOPTION' を設定することで、 longoption の動作を変更することができます.
 
   * `--import` が設定されていれば、デフォルト値を環境変数から取り込みます.
   * `--prefix PREFIX` が設定されていれば, 最終的に設定される環境変数に接頭辞が付きます.
-  * `--stop STOPWORD` が設定されていれば, オプション解析を中断するマークを設定できます.
+  * `--stop STOPWORD` が設定されていれば, オプション解析を中断するマークを設定できます. unix ではよく `--` が利用されます.
+  * `--help-flag HELP_FLAG` が設定されていれば, そのフラグが設定されている場合にヘルプテキストを表示してプログラムを終了させることができます.
+    * `--help-exit HELP_EXIT` で、ヘルプ表示終了時の終了コードを設定できます. 未指定の場合は 0 です
 
 #### example 1. import
 
-if you can't use `LONGOPTION`, no exists arguments is set brank.
+デフォルトでは longoption は環境変数から値を取り込むことはしません。
 
 ```bash
 export V1=exists
-eval "$(longoption.sh "--v1 V1")"
+export V2=exists
+eval "$(longoption.sh "--v1 V1
+--v2 V2" \
+--v2 v2)"
 echo V1=$V1
+echo V2=$V2
 ```
 
 ↓
 
 ```
 V1=
+V2=v2
 ```
 
-if you set use `LONGOPTION='--imoprt'`, set from environment variables.
+`LONGOPTION='--import'` を使うと、環境変数にその値が設定されていれば初期値として利用します.
 
 ```bash
 export V1=exists
-eval "$(LONGOPTION='--import' longoption.sh "--v1 V1")"
+export V2=exists
+eval "$(LONGOPTION='--import' longoption.sh \
+"--v1 V1
+--v2 V2" \
+ --v2 v2)"
 echo V1=$V1
+echo V2=$V2
 ```
 
 ↓
 
 ```
 V1=exists
+V2=v2
 ```
 
 #### example 2. prefix
+
+`LONGOPTION='--prefix HOGE_'` を設定すると、出力される環境変数に接頭辞が付きます.
 
 ```bash
 DOC="--v1 V1"
@@ -199,7 +219,7 @@ HOGE_V1=V1
 
 #### example 3. stop
 
-`LONGOPTION_STOP` is set option end
+`LONGOPTION='--stop --'` を設定すると、引数に `--` が出現したら引数解析を中断します.
 
 ```bash
 DOC="
@@ -233,14 +253,27 @@ V2=
 ```
 
 
-### Outputs
+#### example 3. help
 
-longoption.sh output bash shell script. you can use it by `eval`.
-output variables is
+`LONGOPTION='--help-exit-flag HELP'` を設定すると、 `--help` が引数に指定されている場合、ヘルプテキストを表示して exit します.
 
- * `LONGOPTION__HELP_TEXT` is help document
- * `LONGOPTION__OTHER_ARGS` is no option arguments (array).
- * `LONGOPTION__OPTION_ARGS` is assoc-map. like `(["VALUENAME"] = "--option value1")`. (bash v4 only)
+```bash
+DOC="--help   show this text"
+
+echo "** brefore parse"
+eval "$(LONGOPTION='--help-exit-flag HELP' longoption.sh "$DOC" --help)"
+echo "** after parse"
+```
+
+↓
+
+```
+** brefore parse
+--help   show this text
+```
+
+`LONGOPTION='--help-exit-flag HELP --help-exit-code -1'` のような設定で、ヘルプ中断時の終了コードを変更できます.
+
 
 
 Platform Support with Tested System

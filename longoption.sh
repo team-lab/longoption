@@ -46,11 +46,15 @@ if [ "$LONGOPTION" == "--prefix LONGOPTION_" ];then
   LONGOPTION_PREFIX=LONGOPTION_
   LONGOPTION_STOP=
   LONGOPTION_IMPORT=0
+  LONGOPTION_HELP_EXIT_FLAG=
+  LONGOPTION_HELP_EXIT_CODE=0
 else
   eval "$(LONGOPTION='--prefix LONGOPTION_' $0 '
     --import
     --prefix PREFIX
     --stop STOP
+    --help-exit-flag HELP_EXIT_FLAG
+    --help-exit-code HELP_EXIT_CODE
   ' $LONGOPTION)"
 fi
 LONGOPTION__OPTIONDIC=()
@@ -170,6 +174,12 @@ do
 done
 
 : output options
+if [ -n "$LONGOPTION_HELP_EXIT_FLAG" -a "$(map_get LONGOPTION__VALUEDIC "$LONGOPTION_HELP_EXIT_FLAG")" == "1" ];then
+  printf "
+echo %q
+exit %d" "$LONGOPTION__HELP_TEXT" "$LONGOPTION_HELP_EXIT_CODE"
+  exit
+fi
 for ((i=0; i < ${#LONGOPTION__VALUEDIC[@]}; i+=2)) {
   echo "${LONGOPTION__VALUEDIC[$i]}=$(printf %q "${LONGOPTION__VALUEDIC[$((i+1))]}")"
 }

@@ -34,11 +34,17 @@ do
       case "$IN_SCRIPT" in
       text)
         if [[ ! -z "$COMPARE_RESULT" ]];then
-          if [[ "$COMPARE_RESULT" != "$SCRIPT" ]];then
+          if [ ${BASH_VERSINFO[0]} -lt 4 ];then
+            EXPECTED=$(echo "$SCRIPT"|sed -e '/ *# only bash 4$/d')
+          else
+            EXPECTED=$(echo "$SCRIPT"|sed -e 's/ *# only bash 4$//')
+          fi
+          EXPECT=
+          if [[ "$COMPARE_RESULT" != "$EXPECTED" ]];then
             echo "-- $SCRIPT_NAME ---------------------------------------------"
             echo "ERROR RESULT NOT EXPECT"
             echo "$BASH_SCRIPT"
-            diff -u <(echo "$COMPARE_RESULT") <(echo "$SCRIPT")
+            diff -u <(echo "$COMPARE_RESULT") <(echo "$EXPECTED")
             FAILS=$((FAILS + 1))
             SUCCESS=$((SUCCESS - 1))
           else

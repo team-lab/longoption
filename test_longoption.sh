@@ -28,8 +28,14 @@ $ACTUAL
 __ACTUAL__
 echo \".\"
 " > $TEMP
-  if ! RESULT="$(bash $TEMP)";then
+  local EXPECT_EXIT_CODE=${6:-0}
+  chmod +x $TEMP
+  local RESULT="$(bash -c $TEMP; echo $?)"
+  local EXIT_CODE=$(echo "$RESULT"|sed -n '$p')
+  RESULT=$(echo "$RESULT"|sed -e '$d')
+  if [[ $EXIT_CODE -ne $EXPECT_EXIT_CODE ]] ;then
     echo "***************fail****************"
+    echo "EXIT_CODE=$EXIT_CODE (EXPECTED $EXPECT_EXIT_CODE)"
     echo "----SCRIPT-----"
     cat $TEMP
     FAILS=("${FAILS[@]}" "$TESTS [ERROR] $TITLE")
@@ -37,6 +43,8 @@ echo \".\"
       echo "----RESULT-INTERNAL-------"
       cat ${TEMP}.result
     fi
+    echo "----RESULT-----"
+    echo "${RESULT}"
     echo "$TESTS ERROR END $TITLE"
     echo $hr
     return
@@ -74,6 +82,7 @@ DOC="
   --no-flag-2 is reverse flag
   --flag-3 Flag
   --no-flag-4 Reverse flag
+  --help
 "
 
 optest "can get value" \
@@ -92,6 +101,14 @@ optest "--no-import" \
 
 optest "--import is not set" \
  "--hugahuga FUGA" "FUGA=import $COMMAND" '$FUGA' ""
+
+optest "--help-exit-flag" \
+ "--help
+." "LONGOPTION='--help-exit-flag HELP' $COMMAND --help" '' "--help"
+
+optest "--help-exit-code" \
+ "--help
+." "LONGOPTION='--help-exit-flag HELP --help-exit-code 1' $COMMAND --help" '' "--help" 1
 
 optest "PREFIX LONGOPTION='--prefix hoge'" \
  "$DOC" "LONGOPTION='--prefix hoge_' $COMMAND --hogehoge 1" '
