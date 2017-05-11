@@ -169,6 +169,27 @@ V1=V1
 V2=
 ```
 
+#### example 3. help
+
+if set `LONGOPTION='--help-exit-flag HELP'` , and `--help` exits in arguments, then longoption outputs bash scripts that show help text and exit.
+
+```bash
+DOC="--help   show this text"
+
+echo "** brefore parse"
+eval "$(LONGOPTION='--help-exit-flag HELP' longoption.sh "$DOC" --help)"
+echo "** after parse"
+```
+
+↓
+
+```
+** brefore parse
+--help   show this text
+```
+
+If you change exit code, you can use `--help-exit-code` like `LONGOPTION='--help-exit-flag HELP --help-exit-code -1'` .
+
 
 ### Outputs
 
