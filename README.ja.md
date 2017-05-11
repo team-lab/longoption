@@ -46,11 +46,10 @@ fi
 
  * 引数設定をヘルプテキスト（第一引数）から解析します
  * 'bash script' を出力します. 出力を `eval` することで環境変数として引数を環境変数から利用できます
- * ヘルプテキストで指定されなかった引数を別の変数として利用できます
 
 ## どのように動くか
 
-longoption は自らの第一引数の内容を解析して、それに基づき、後続の引数を解析し、環境変数に設定するための bash スクリプトを標準出力に出力します. longoption を単体で使うと
+longoption は自らの第一引数の内容を解析して、それに基づき、後続の引数を解析し、環境変数に設定するための bash スクリプトを標準出力に出力します. もし longoption を単体で使うと
 
 ```bash
 ./longoption.sh "Option:
@@ -277,7 +276,7 @@ echo "** after parse"
 `LONGOPTION='--help-exit-flag HELP --help-exit-code -1'` のような設定で、ヘルプ中断時の終了コードを変更できます.
 
 
-#### example 3. unknown option exit
+#### example 4. unknown option exit
 
 `LONGOPTION='--unknown-option-exit-code -1'` が設定されていれば, ヘルプテキストで定義されていない項目が引数として指定された場合、プログラムを終了コード -1 で終了します。`--unknown-option-exit-message` を指定することで、終了時のメッセージを変更することができます。
 
@@ -297,9 +296,6 @@ echo "** after parse"
 
 this is unknown: --bad-option
 ```
-
-`LONGOPTION='--help-exit-flag HELP --help-exit-code -1'` のような設定で、ヘルプ中断時の終了コードを変更できます.
-
 
 Platform Support with Tested System
 -----------------------------------

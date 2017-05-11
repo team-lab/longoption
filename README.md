@@ -3,14 +3,17 @@ longoption
 
 [![Build Status](https://travis-ci.org/team-lab/longoption.svg?branch=master)](https://travis-ci.org/team-lab/longoption)
 
-arguments parser for bash. only style `--optname VALNAME`.
+It is an argument analyzer of bash. It solves the following problem
 
-[Japanese](README.ja.md)
+ * Handling arguments with bash, more than half of the code is spent analyzing arguments
+ * I have to maintain both the code and the help text and it tends to diverge
+
+[Japanese README is here](README.ja.md)
 
 ## Example
  
 ```bash
-# set help document
+# set help document. Bash does not require special literals to enter multi-line strings in variables
 HELP="
   --opt1 OPTION1   Option1 has one argument ( default "" )
   --opt2 OPTION2   Option2 has one argument ( default "" )
@@ -18,7 +21,7 @@ HELP="
   --no-revflag     revflag has no arguments ( if setted, it is 0, default 1 )
 "
 
-# path help to longpotion.sh and eval result outputs
+# Pass help text and arguments to longpotion.sh and eval the output
 eval "$(longoption.sh "$HELP" "$@")"
 
 # you can get option values
@@ -39,14 +42,39 @@ if [ ${#LONGOPTION__OTHER_ARGS[@]} -ne 0 ];then
 fi
 ```
 
- * Get option settings from help document (from first argumant).
- * Output 'bash script'. you can `eval` this and get options as environment variables.
- * Can get un parsed options.
+ * Parse the argument setting from the help text (first argument)
+ * longoption output 'Bash script', you can use the argument as an environment variable from 'environment variable' by `eval` the output
 
-### how to parse
+### how it work
 
-longoption read document from first argument.
-longoption search `^\ *--([a-z][-a-z0-9]*)\ +([A-Z][A-Z0-9_]*)(\ |$)` for each lines.
+Longoption parses the contents of its first argument, analyzes the following arguments based on it, and outputs a bash script to standard output to set it as an environment variable.
+If you use longoption alone
+
+```bash
+./longoption.sh "Option:
+  --option1 VALUE_NAME1" --option1 V1
+```
+
+↓
+
+```
+VALUE_NAME1=V1
+declare -- LONGOPTION__HELP_TEXT="Option:
+--option1 VALUE_NAME1"
+declare -a LONGOPTION__OTHER_ARGS='()'
+declare -A LONGOPTION__OPTION_ARGS='([VALUE_NAME1]="--option1 V1" )' # only bash 4
+```
+
+You can get such output. It is supposed to do this using `eval`. Arguments The following variables are output in addition to the specified values.
+
+  * Help text is assigned to `LONGOPTION__HELP_TEXT`.
+  * Arguments other than those specified in the help text (missing from analysis) are assigned as an array to `LONGOPTION__OTHER_ARGS`.
+  * An associative array of the form `(["VALUENAME"] ="--option value 1")` is assigned to `LONGOPTION__OPTION_ARGS` (bash v4 only)
+
+### how it parse your help text
+
+Longoption read help text from first argument.
+Longoption search `^\ *--([a-z][-a-z0-9]*)\ +([A-Z][A-Z0-9_]*)(\ |$)` for each lines.
 if finds,
 
   * `--option-name VALUENAME` is long option has value. set for environment variable names `VALUENAME` to argument .
@@ -55,15 +83,15 @@ if finds,
 
   * `--option-name Document` is flag option. variable-name format is `[A-Z][A-Z0-9_]*`.
 
-### parse option (in document)
+### parse option (in help text)
 
 `LONGOPTION:` is keyword. if find this, longoption change parse mode.
 
-  * `LONGOPTION:` is 'skip this line'. this line don't add to help document. but option setting is effective.
-  * `LONGOPTION:STOP_PARSE` is stop option parse.( but help document adding dosen't stop )
+  * `LONGOPTION:` is 'skip this line'. this line don't add to help text. but option setting is effective.
+  * `LONGOPTION:STOP_PARSE` is stop option parse.( but help text adding dosen't stop )
   * `LONGOPTION:START_PARSE` is resule option parse.
-  * `LONGOPTION:STOP_HELP` is stop help document adding.(but option parse dosen't stop )
-  * `LONGOPTION:START_HELP` is resume help document adding.
+  * `LONGOPTION:STOP_HELP` is stop help text adding.(but option parse dosen't stop )
+  * `LONGOPTION:START_HELP` is resume help text adding.
 
 #### example
 
@@ -102,11 +130,16 @@ OPTION4=O4
 
 ### parse option (from environment variables)
 
-parse option set from environment names 'LONGOPTION'.
+Parse option set from environment names 'LONGOPTION'.
 
-  * if `--import` is setted, import option value from environment.
-  * if `--prefix PREFIX` dose set, export value has prefix.
-  * if `--stop STOPWORD` dose set, stop option parsing after it.
+  * If `--import` is set, import option value from environment.
+  * If `--prefix PREFIX` is set, export value has prefix.
+  * If `--stop STOPWORD` is set, stop option parsing after it.
+  * If `--help-flag` is set, If the flag is set, you can display the help text and exit the program.
+    * `--help-exit HELP_EXIT` allows you to set the exit code at the end of the help display, default is `0`
+  * If `--unknown-option-exit-code UNKNOWN_OPTION_EXIT_CODE` is set, if an item not defined in the help text is specified as an argument, the program is terminated. For example, specify `-1`.
+     * You can change the message at the end by specifying `--unknown-option-exit-message UNKNOWN_OPTION_EXIT_MESSAGE`. The default is 'Unknonw options:'.
+
 
 #### example
 
@@ -190,15 +223,27 @@ echo "** after parse"
 
 If you change exit code, you can use `--help-exit-code` like `LONGOPTION='--help-exit-flag HELP --help-exit-code -1'` .
 
+#### example 4. unknown option exit
 
-### Outputs
 
-longoption.sh output bash shell script. you can use it by `eval`.
-output variables is
+If `LONGOPTION='--unknown-option-exit-code -1'` is set, if an item not defined in the help text is specified as an argument, the program ends with exit code -1 . By specifying `--unknown-option-exit-message`, you can change the message at the end.
 
- * `LONGOPTION__HELP_TEXT` is help document
- * `LONGOPTION__OTHER_ARGS` is no option arguments (array).
- * `LONGOPTION__OPTION_ARGS` is assoc-map. like `(["VALUENAME"] = "--option value1")`. (bash v4 only)
+```bash
+DOC="--help   show this text"
+
+echo "** brefore parse"
+eval "$(LONGOPTION="--unknown-option-exit-code 0 --unknown-option-exit-message 'this is unknown:'" longoption.sh "$DOC" --bad-option)"
+echo "** after parse"
+```
+
+↓
+
+```
+** brefore parse
+--help   show this text
+
+this is unknown: --bad-option
+```
 
 
 Platform Support with Tested System
