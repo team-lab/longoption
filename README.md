@@ -29,17 +29,6 @@ echo opt1=$OPTION1
 echo opt2=$OPTION2
 echo flag=$FLAG
 echo revflag=$REVFLAG
-
-if [ -z "HOGE" ];then
-  echo "$LONGOPTION__HELP_TEXT" # HELP TEXT
-  exit
-fi
-
-if [ ${#LONGOPTION__OTHER_ARGS[@]} -ne 0 ];then
-  echo "Unknown options ${LONGOPTION__OTHER_ARGS[@]}"
-  echo "$LONGOPTION__HELP_TEXT"
-  exit -1
-fi
 ```
 
  * Parse the argument setting from the help text (first argument)
@@ -141,7 +130,7 @@ Parse option set from environment names 'LONGOPTION'.
      * You can change the message at the end by specifying `--unknown-option-exit-message UNKNOWN_OPTION_EXIT_MESSAGE`. The default is 'Unknonw options:'.
 
 
-#### example
+#### example 1. import
 
 if you can't use `LONGOPTION`, no exists arguments is set brank.
 
@@ -184,6 +173,8 @@ echo V1=$HOGE_V1
 V1=V1
 ```
 
+#### example 2. stop
+
 `LONGOPTION_STOP` is set option end
 
 ```bash
@@ -201,6 +192,20 @@ echo V2=$V2
 V1=V1
 V2=
 ```
+
+If you want to make more complicated control, you can do the same operation with the following code.
+
+```bash
+DOC="--help   show this text"
+
+eval "$(longoption.sh "$DOC" --bad-option)"
+if [ ${#LONGOPTION__OTHER_ARGS[@]} -ne 0 ];then
+  echo "$LONGOPTION__HELP_TEXT"
+  echo "Unknown options: ${LONGOPTION__OTHER_ARGS[@]}"
+  exit
+fi
+```
+
 
 #### example 3. help
 
@@ -243,6 +248,19 @@ echo "** after parse"
 --help   show this text
 
 this is unknown: --bad-option
+```
+
+If you want to make more complicated control, you can do the same operation with the following code.
+
+```bash
+DOC="--help   show this text"
+
+eval "$(longoption.sh "$DOC" --bad-option)"
+if [ ${#LONGOPTION__OTHER_ARGS[@]} -ne 0 ];then
+  echo "$LONGOPTION__HELP_TEXT"
+  echo "Unknown options: ${LONGOPTION__OTHER_ARGS[@]}"
+  exit
+fi
 ```
 
 
