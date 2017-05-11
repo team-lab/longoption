@@ -142,6 +142,8 @@ OPTION4=O4
   * `--stop STOPWORD` が設定されていれば, オプション解析を中断するマークを設定できます. unix ではよく `--` が利用されます.
   * `--help-flag HELP_FLAG` が設定されていれば, そのフラグが設定されている場合にヘルプテキストを表示してプログラムを終了させることができます.
     * `--help-exit HELP_EXIT` で、ヘルプ表示終了時の終了コードを設定できます. 未指定の場合は 0 です
+  * `--unknown-option-exit-code UNKNOWN_OPTION_EXIT_CODE` が設定されていれば, ヘルプテキストで定義されていない項目が引数として指定された場合、プログラムを終了します。例えば `-1` を指定します。
+    * `--unknown-option-exit-message UNKNOWN_OPTION_EXIT_MESSAGE` を指定することで、終了時のメッセージを変更することができます。デフォルトは 'Unknonw options:' です。
 
 #### example 1. import
 
@@ -274,6 +276,29 @@ echo "** after parse"
 
 `LONGOPTION='--help-exit-flag HELP --help-exit-code -1'` のような設定で、ヘルプ中断時の終了コードを変更できます.
 
+
+#### example 3. unknown option exit
+
+`LONGOPTION='--unknown-option-exit-code -1'` が設定されていれば, ヘルプテキストで定義されていない項目が引数として指定された場合、プログラムを終了コード -1 で終了します。`--unknown-option-exit-message` を指定することで、終了時のメッセージを変更することができます。
+
+```bash
+DOC="--help   show this text"
+
+echo "** brefore parse"
+eval "$(LONGOPTION="--unknown-option-exit-code 0 --unknown-option-exit-message 'this is unknown:'" longoption.sh "$DOC" --bad-option)"
+echo "** after parse"
+```
+
+↓
+
+```
+** brefore parse
+--help   show this text
+
+this is unknown: --bad-option
+```
+
+`LONGOPTION='--help-exit-flag HELP --help-exit-code -1'` のような設定で、ヘルプ中断時の終了コードを変更できます.
 
 
 Platform Support with Tested System

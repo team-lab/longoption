@@ -14,8 +14,12 @@ optest(){
   local COMMAND=${3/ "__DOC__"/ \"${2}\"}
   local ACTUAL="$4"
   local EXPECT="$5"
-  local EXPECT_DOT="$EXPECT
-."  
+  if [ "${7:-}" == "--nodot" ];then
+    local EXPECT_DOT="$EXPECT"
+  else
+    local EXPECT_DOT="$EXPECT
+."
+  fi
   echo "#!/bin/bash
 set -e
 set -o pipefail
@@ -109,6 +113,16 @@ optest "--help-exit-flag" \
 optest "--help-exit-code" \
  "--help
 ." "LONGOPTION='--help-exit-flag HELP --help-exit-code 1' $COMMAND --help" '' "--help" 1
+
+optest "--unknown-option-exit-code" \
+ "--help" "LONGOPTION='--unknown-option-exit-code 1' $COMMAND --unk" '' "--help
+
+Unknonw options: --unk" 1 --nodot
+
+optest "--unknown-option-exit-message" \
+ "--help" "LONGOPTION='--unknown-option-exit-code 1 --unknown-option-exit-message \"test  message\"' $COMMAND --unk" '' "--help
+
+test  message --unk" 1 --nodot
 
 optest "PREFIX LONGOPTION='--prefix hoge'" \
  "$DOC" "LONGOPTION='--prefix hoge_' $COMMAND --hogehoge 1" '
