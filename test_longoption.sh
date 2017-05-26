@@ -114,6 +114,10 @@ optest "--help-exit-code" \
  "--help
 ." "LONGOPTION='--help-exit-flag HELP --help-exit-code 1' $COMMAND --help" '' "--help" 1
 
+optest "--help-exit and --prefix" \
+ "--help
+." "LONGOPTION='--help-exit-flag HOGE_HELP --prefix HOGE_' $COMMAND --help" '' "--help" 0
+
 optest "--unknown-option-exit-code" \
  "--help" "LONGOPTION='--unknown-option-exit-code 1' $COMMAND --unk" '' "--help
 
