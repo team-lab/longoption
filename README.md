@@ -231,13 +231,13 @@ If you change exit code, you can use `--help-exit-code` like `LONGOPTION='--help
 #### example 4. unknown option exit
 
 
-If `LONGOPTION='--unknown-option-exit-code -1'` is set, if an item not defined in the help text is specified as an argument, the program ends with exit code -1 . By specifying `--unknown-option-exit-message`, you can change the message at the end.
+If `LONGOPTION='--unknown-option-exit-code -1'` is set, if an item not defined in the help text is specified as an argument, the program ends with exit code -1 . By specifying `--unknown-option-exit-label-name`, you can change the message at the end.
 
 ```bash
 DOC="--help   show this text"
 
 echo "** brefore parse"
-eval "$(LONGOPTION="--unknown-option-exit-code 0 --unknown-option-exit-message 'this is unknown:'" longoption.sh "$DOC" --bad-option)"
+eval "$(LABEL="this is unknown:" LONGOPTION="--unknown-option-exit-code 0 --unknown-option-exit-label-name LABEL" longoption.sh "$DOC" --bad-option)"
 echo "** after parse"
 ```
 

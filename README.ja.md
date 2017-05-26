@@ -278,13 +278,13 @@ fi
 
 #### example 5. unknown option exit
 
-`LONGOPTION='--unknown-option-exit-code -1'` が設定されていれば, ヘルプテキストで定義されていない項目が引数として指定された場合、プログラムを終了コード -1 で終了します。`--unknown-option-exit-message` を指定することで、終了時のメッセージを変更することができます。
+`LONGOPTION='--unknown-option-exit-code -1'` が設定されていれば, ヘルプテキストで定義されていない項目が引数として指定された場合、プログラムを終了コード -1 で終了します。`--unknown-option-exit-label-name` を指定することで、終了時のメッセージを変更することができます。
 
 ```bash
 DOC="--help   show this text"
 
 echo "** brefore parse"
-eval "$(LONGOPTION="--unknown-option-exit-code 0 --unknown-option-exit-message 'this is unknown:'" longoption.sh "$DOC" --bad-option)"
+eval "$(LABEL="this is unknown:" LONGOPTION="--unknown-option-exit-code 0 --unknown-option-exit-label-name LABEL" longoption.sh "$DOC" --bad-option)"
 echo "** after parse"
 ```
 

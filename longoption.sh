@@ -48,18 +48,17 @@ LONGOPTION_IMPORT=0
 LONGOPTION_HELP_EXIT_FLAG=
 LONGOPTION_HELP_EXIT_CODE=0
 LONGOPTION_UNKNOWN_OPTION_EXIT_CODE=
-LONGOPTION_UNKNOWN_OPTION_EXIT_MESSAGE="Unknonw options:"
+LONGOPTION_UNKNOWN_OPTION_EXIT_LABEL_NAME=
 if [ "$LONGOPTION" != "--prefix LONGOPTION_" ];then
-  eval "$(eval "LONGOPTION='--prefix LONGOPTION_' $0 '
+  eval "$(LONGOPTION='--prefix LONGOPTION_' $0 '
     --import
     --prefix PREFIX
     --stop STOP
     --help-exit-flag HELP_EXIT_FLAG
     --help-exit-code HELP_EXIT_CODE
-    --unknown-option-exit-code    UNKNOWN_OPTION_EXIT_CODE
-    --unknown-option-exit-message UNKNOWN_OPTION_EXIT_MESSAGE
-  ' $LONGOPTION")"
-  LONGOPTION_UNKNOWN_OPTION_EXIT_MESSAGE="${LONGOPTION_UNKNOWN_OPTION_EXIT_MESSAGE:-Unknonw options:}"
+    --unknown-option-exit-code       UNKNOWN_OPTION_EXIT_CODE
+    --unknown-option-exit-label-name UNKNOWN_OPTION_EXIT_LABEL_NAME
+  ' $LONGOPTION)"
 fi
 LONGOPTION__OPTIONDIC=()
 LONGOPTION__VALUEDIC=()
@@ -185,13 +184,17 @@ exit %d" "$LONGOPTION__HELP_TEXT" "$LONGOPTION_HELP_EXIT_CODE"
   exit
 fi
 if [ -n "$LONGOPTION_UNKNOWN_OPTION_EXIT_CODE" -a "${#LONGOPTION__OTHER_ARGS[@]}" -ne 0 ];then
+  message="Unknown options:"
+  if [ -n "$LONGOPTION_UNKNOWN_OPTION_EXIT_LABEL_NAME" ];then
+    message=$(eval echo \"\$$LONGOPTION_UNKNOWN_OPTION_EXIT_LABEL_NAME\")
+  fi
   printf "
 echo %q
 echo
 echo %q
 exit %d
 " "$LONGOPTION__HELP_TEXT" \
-  "$LONGOPTION_UNKNOWN_OPTION_EXIT_MESSAGE $(echo "${LONGOPTION__OTHER_ARGS[@]}")" \
+  "$message $(echo "${LONGOPTION__OTHER_ARGS[@]}")" \
   "$LONGOPTION_UNKNOWN_OPTION_EXIT_CODE"
 fi
 for ((i=0; i < ${#LONGOPTION__VALUEDIC[@]}; i+=2)) {

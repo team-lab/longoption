@@ -117,12 +117,12 @@ optest "--help-exit-code" \
 optest "--unknown-option-exit-code" \
  "--help" "LONGOPTION='--unknown-option-exit-code 1' $COMMAND --unk" '' "--help
 
-Unknonw options: --unk" 1 --nodot
+Unknown options: --unk" 1 --nodot
 
-optest "--unknown-option-exit-message" \
- "--help" "LONGOPTION='--unknown-option-exit-code 1 --unknown-option-exit-message \"test  message\"' $COMMAND --unk" '' "--help
+optest "--unknown-option-exit-label" \
+ "--help" "UNK_LABEL=' :test  message: ' LONGOPTION='--unknown-option-exit-code 1 --unknown-option-exit-label-name UNK_LABEL' $COMMAND --unk" '' "--help
 
-test  message --unk" 1 --nodot
+ :test  message:  --unk" 1 --nodot
 
 optest "PREFIX LONGOPTION='--prefix hoge'" \
  "$DOC" "LONGOPTION='--prefix hoge_' $COMMAND --hogehoge 1" '
