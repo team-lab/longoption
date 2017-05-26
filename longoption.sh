@@ -59,6 +59,12 @@ if [ "$LONGOPTION" != "--prefix LONGOPTION_" ];then
     --unknown-option-exit-code       UNKNOWN_OPTION_EXIT_CODE
     --unknown-option-exit-label-name UNKNOWN_OPTION_EXIT_LABEL_NAME
   ' $LONGOPTION)"
+  if [ "${#LONGOPTION__OTHER_ARGS[@]}" -ne 0 ];then
+    printf '
+  echo "INVALID LONGOPTION : ('"${LONGOPTION__OTHER_ARGS[@]}"')"
+  exit -1'
+    exit
+  fi
 fi
 LONGOPTION__OPTIONDIC=()
 LONGOPTION__VALUEDIC=()

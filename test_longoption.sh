@@ -4,22 +4,28 @@ set -e
 COMMAND="$(dirname $0)/longoption.sh \"\$DOC\""
 FAILS=()
 TESTS=0
+only_test=$1
 hr=--------------------------------------------
 optest(){
   local TITLE=$1
-  TESTS=$((TESTS + 1))
-  echo "TEST $TESTS: $TITLE"
-  local TEMP=$(mktemp)
   local DOC=$2
   local COMMAND=${3/ "__DOC__"/ \"${2}\"}
-  local ACTUAL="$4"
+  local EXEC_CODE="$4"
   local EXPECT="$5"
+  local EXPECT_EXIT_CODE=${6:-0}
   if [ "${7:-}" == "--nodot" ];then
     local EXPECT_DOT="$EXPECT"
   else
     local EXPECT_DOT="$EXPECT
 ."
   fi
+  if [ -n "$only_test" -a "$only_test" != "$TITLE" ];then
+    echo skip "$TITLE"
+    return
+  fi
+  TESTS=$((TESTS + 1))
+  echo "TEST $TESTS: $TITLE"
+  local TEMP=$(mktemp)
   echo "#!/bin/bash
 set -e
 set -o pipefail
@@ -27,12 +33,11 @@ DOC=\"$DOC\"
 RESULT=\$($COMMAND)
 echo \"\$RESULT\" > $TEMP.result
 eval \"\$RESULT\"
-cat <<__ACTUAL__
-$ACTUAL
-__ACTUAL__
+cat <<__EXEC_CODE__
+$EXEC_CODE
+__EXEC_CODE__
 echo \".\"
 " > $TEMP
-  local EXPECT_EXIT_CODE=${6:-0}
   chmod +x $TEMP
   local RESULT="$(bash -c $TEMP; echo $?)"
   local EXIT_CODE=$(echo "$RESULT"|sed -n '$p')
@@ -96,6 +101,9 @@ if [ ${BASH_VERSINFO[0]} -ge 4 ];then
 optest "LONGOPTION__OPTION_ARGS has parsed options as array" \
  "--hoge HOGE" "$COMMAND --hoge val" '${LONGOPTION__OPTION_ARGS["HOGE"]}' "--hoge val"
 fi
+
+optest "invalid longoption" \
+ "" "LONGOPTION='--bad' $COMMAND" '' "INVALID LONGOPTION : (--bad)" 255 --nodot
 
 optest "--import is import from envirionment variables" \
  "--hugahuga FUGA" "LONGOPTION='--import' FUGA=import $COMMAND" '$FUGA' "import"
